@@ -1,1 +1,1 @@
-from . import RegistrationState
+from . import registration

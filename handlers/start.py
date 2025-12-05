@@ -14,5 +14,8 @@ async def start(message: types.Message):
 
     await message.answer(
         text=f"Assalomu alaykum, {fullname}, davom etish uchun, iltimos, ro'yxatdan o'ting",
-        reply_markup=markup.as_markup(),
+        reply_markup=markup.as_markup(
+            one_time_keyboard=True,
+            resize_keyboard=True
+        ),
     )
