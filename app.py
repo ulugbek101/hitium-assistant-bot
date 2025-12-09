@@ -5,6 +5,7 @@ from aiogram.types import BotCommand
 
 from loader import dp, bot
 from handlers.start import router
+from scheduler import start_scheduler
 
 
 async def main():
@@ -14,6 +15,7 @@ async def main():
         BotCommand(command="tasks", description="Мои задачи"),
         BotCommand(command="info", description="Обо мне"),
     ])
+    start_scheduler()
     await dp.start_polling(bot)
 
 
