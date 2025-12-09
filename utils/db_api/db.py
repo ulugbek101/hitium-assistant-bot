@@ -66,19 +66,19 @@ class Database:
             CREATE TABLE IF NOT EXISTS users(
                 id INT PRIMARY KEY AUTO_INCREMENT,
                 telegram_id VARCHAR(255) NOT NULL UNIQUE,
-                first_name VARCHAR(50),
-                last_name VARCHAR(50),
-                middle_name VARCHAR(50),
-                phone_number VARCHAR(12),
-                type_of_document VARCHAR(20),
-                card_number VARCHAR(16),
-                card_holder_name VARCHAR(100),
-                tranzit_number VARCHAR(50),
-                bank_name VARCHAR(20),
-                specialization VARCHAR(255),
-                id_card_photo1 VARCHAR(255),
-                id_card_photo2 VARCHAR(255),
-                passport_photo VARCHAR(255)
+                first_name VARCHAR(50) NULL,
+                last_name VARCHAR(50) NULL,
+                middle_name VARCHAR(50) NULL,
+                phone_number VARCHAR(12) NULL,
+                type_of_document VARCHAR(20) NULL,
+                card_number VARCHAR(16) NULL,
+                card_holder_name VARCHAR(100) NULL,
+                tranzit_number VARCHAR(50) NULL,
+                bank_name VARCHAR(20) NULL,
+                specialization VARCHAR(255) NULL,
+                id_card_photo1 VARCHAR(255) NULL,
+                id_card_photo2 VARCHAR(255) NULL,
+                passport_photo VARCHAR(255) NULL
             )
         """
         self.execute(sql)
@@ -92,41 +92,6 @@ class Database:
             VALUES (%s)
         """
         self.execute(sql, (telegram_id,), commit=True)
-
-    def register_user(self,
-                      telegram_id: str,
-                      first_name: str,
-                      last_name: str,
-                      middle_name: str,
-                      phone_number: str,
-                      type_of_document: str,
-                      card_number: str,
-                      card_holder_name: str,
-                      tranzit_number: str,
-                      bank_name: str,
-                      specialization: str,
-                      id_card_photo1: str | None,
-                      id_card_photo2: str | None,
-                      passport_photo: str | None
-                      ):
-        """
-        Registers users in users table
-        """
-        sql = """
-            INSERT INTO users (
-                telegram_id, first_name, last_name, middle_name, 
-                phone_number, type_of_document, card_number, 
-                card_holder_name, tranzit_number, bank_name, 
-                specialization, id_card_photo1, id_card_photo2, passport_photo
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """
-        params = (
-            telegram_id, first_name, last_name, middle_name,
-            phone_number, type_of_document, card_number,
-            card_holder_name, tranzit_number, bank_name,
-            specialization, id_card_photo1, id_card_photo2, passport_photo
-        )
-        self.execute(sql, params=params, commit=True)
 
     def update_field(self, telegram_id: str, field_name: str, value: str) -> None:
         """

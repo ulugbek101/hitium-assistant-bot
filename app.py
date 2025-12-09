@@ -1,12 +1,19 @@
 import asyncio
 import logging
 
+from aiogram.types import BotCommand
+
 from loader import dp, bot
 from handlers.start import router
 
 
 async def main():
     await bot.delete_webhook(drop_pending_updates=True)
+    await bot.set_my_commands([
+        BotCommand(command="start", description="Запустить бота"),
+        BotCommand(command="tasks", description="Мои задачи"),
+        BotCommand(command="info", description="Обо мне"),
+    ])
     await dp.start_polling(bot)
 
 
