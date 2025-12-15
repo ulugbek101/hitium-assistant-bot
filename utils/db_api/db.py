@@ -110,6 +110,15 @@ class Database:
         sql = f"UPDATE users SET {field_name} = %s WHERE telegram_id = %s"
         self.execute(sql, (value, telegram_id), commit=True)
 
+    def get_user(self, telegram_id: str) -> dict:
+        """
+        Returns ceratin user from users table
+        """
+        sql = """
+            SELECT * FROM users WHERE telegram_id = %s
+        """
+        return self.execute(sql, (telegram_id,), fetchone=True)
+
     def get_users(self) -> list[dict]:
         """
         Returns all users from users table

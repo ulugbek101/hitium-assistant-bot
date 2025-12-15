@@ -1,11 +1,14 @@
 import re
 
+import requests
+
 from aiogram import F
 from aiogram import types
 from aiogram.fsm.context import FSMContext
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
 
-from loader import db
+from loader import db, bot
+from config import API_URL
 from router import router
 from states.registration import Registration
 
@@ -39,10 +42,16 @@ async def save_phone_number(message: types.Message, state: FSMContext):
     pattern = re.compile(r"^998\d{9}$")
 
     if pattern.match(phone_number.replace("+", "").replace(" ", "")):
+        # Make initial registration of a user
+        try:
+            db.initial_registration(telegram_id=message.from_user.id)
+        except Exception as _exp:
+            print("Ro'yxatga olishda xatolik yuz berdi:", _exp.__class__.__name__, _exp)
+            await message.answer(text=f"Ro'yxatga olishda xatolik yuz berdi: {_exp.__class__.__name__}: {_exp}")
+
         await message.answer(text="Ismingizni kiriting", reply_markup=types.ReplyKeyboardRemove())
         await state.set_state(Registration.first_name)
 
-        db.initial_registration(telegram_id=message.from_user.id)
         db.update_field(telegram_id=message.from_user.id, field_name="phone_number", value=phone_number)
     else:
         await message.answer("Telefon raqam noto'g'ri formatda kiritildi, "
@@ -91,19 +100,21 @@ async def save_middle_name(message: types.Message, state: FSMContext):
 
 @router.message(Registration.type_of_document)
 async def save_type_of_document(message: types.Message, state: FSMContext):
-    type_of_document = message.text
+    type_of_document = message.text.strip().lower()
 
-    if type_of_document not in ["Passport", "ID Karta"]:
+    if type_of_document not in ["passport", "id karta"]:
         await message.answer(text="Noto'g'ri hujjat turi tanlandi, iltimos, quyida keltirilganlardan tanlang")
     else:
-        db.update_field(telegram_id=message.from_user.id, field_name="type_of_document", value=type_of_document)
+        type_of_document = "passport" if type_of_document == "passport" else "id_card"
 
-        if type_of_document == "Passport":
+        if type_of_document == "passport":
             await message.answer("Passport rasmingizni yuboring", reply_markup=types.ReplyKeyboardRemove())
             await state.set_state(Registration.passport_photo)
         else:
             await message.answer("ID Kartangizni old qismi rasmini yuboring", reply_markup=types.ReplyKeyboardRemove())
             await state.set_state(Registration.id_card_photo1)
+
+        db.update_field(telegram_id=message.from_user.id, field_name="type_of_document", value="passport")
 
 
 @router.message(Registration.passport_photo)
@@ -208,5 +219,25 @@ async def save_specialization(message: types.Message, state: FSMContext):
     specialization = message.text.strip()
 
     db.update_field(telegram_id=message.from_user.id, field_name="specialization", value=specialization)
-    await message.answer("✅ Ma'lumotlaringiz muvaffaqiyatli saqlandi, raxmat")
+    await message.answer("Iltimos, ozgina kuting ...")
     await state.clear()
+
+    await register_user(telegram_id=message.from_user.id)
+
+
+async def register_user(telegram_id: int):
+    user = db.get_user(telegram_id=telegram_id)
+    URL = f"{API_URL}/register-user/"
+    response = requests.post(URL, json=user)
+
+    if response.ok:
+        await bot.send_message(
+            telegram_id=telegram_id,
+            text="✅ Ma'lumotlaringiz muvaffaqiyatli saqlandi, raxmat",
+        )
+    else:
+        await bot.send_message(
+            telegram_id=telegram_id,
+            text="Ro'yxatga olishda xatolik yuz berdi, iltimos, dasturchi bilan bog'laning\n"
+                 f"Xatolik statusi: {response.status_code}",
+        )

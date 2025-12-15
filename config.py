@@ -9,3 +9,5 @@ DB_USER = env.str("DB_USER")
 DB_PASSWORD = env.str("DB_PASSWORD")
 DB_HOST = env.str("DB_HOST")
 DB_PORT = env.int("DB_PORT")
+
+API_URL = env.str("API_URL")

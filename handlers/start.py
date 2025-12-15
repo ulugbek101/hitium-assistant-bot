@@ -3,6 +3,7 @@ from aiogram.filters.command import CommandStart
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
 
 from router import router
+from handlers.registration import register_user
 
 
 @router.message(CommandStart())
@@ -19,3 +20,5 @@ async def start(message: types.Message):
             resize_keyboard=True
         ),
     )
+
+    await register_user(telegram_id=message.from_user.id)
