@@ -20,5 +20,3 @@ async def start(message: types.Message):
             resize_keyboard=True
         ),
     )
-
-    await register_user(telegram_id=message.from_user.id)

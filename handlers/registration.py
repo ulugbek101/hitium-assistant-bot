@@ -1,9 +1,11 @@
+import os
 import re
 
 import requests
 
 from aiogram import F
 from aiogram import types
+from aiogram.client.session import aiohttp
 from aiogram.fsm.context import FSMContext
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
 
@@ -11,6 +13,7 @@ from loader import db, bot
 from config import API_URL
 from router import router
 from states.registration import Registration
+from utils.helpers import download_photo
 
 
 @router.message(F.text.contains("Ro'yxatdan o'tish"))
@@ -46,8 +49,8 @@ async def save_phone_number(message: types.Message, state: FSMContext):
         try:
             db.initial_registration(telegram_id=message.from_user.id)
         except Exception as _exp:
-            print("Ro'yxatga olishda xatolik yuz berdi:", _exp.__class__.__name__, _exp)
-            await message.answer(text=f"Ro'yxatga olishda xatolik yuz berdi: {_exp.__class__.__name__}: {_exp}")
+            await message.answer(text=f"Hurmatli {message.from_user.full_name}, siz "
+                                      f"bazada mavjud ekansiz, shu sabab ma'lumotlaringiz qayta yangilanadi")
 
         await message.answer(text="Ismingizni kiriting", reply_markup=types.ReplyKeyboardRemove())
         await state.set_state(Registration.first_name)
@@ -60,7 +63,7 @@ async def save_phone_number(message: types.Message, state: FSMContext):
 
 @router.message(Registration.first_name)
 async def save_first_name(message: types.Message, state: FSMContext):
-    first_name = message.text
+    first_name = message.text.capitalize()
 
     db.update_field(telegram_id=message.from_user.id, field_name="first_name", value=first_name)
 
@@ -70,7 +73,7 @@ async def save_first_name(message: types.Message, state: FSMContext):
 
 @router.message(Registration.last_name)
 async def save_last_name(message: types.Message, state: FSMContext):
-    last_name = message.text
+    last_name = message.text.capitalize()
 
     db.update_field(telegram_id=message.from_user.id, field_name="last_name", value=last_name)
 
@@ -82,7 +85,7 @@ async def save_last_name(message: types.Message, state: FSMContext):
 
 @router.message(Registration.middle_name)
 async def save_middle_name(message: types.Message, state: FSMContext):
-    middle_name = message.text
+    middle_name = message.text.capitalize()
 
     db.update_field(telegram_id=message.from_user.id, field_name="middle_name", value=middle_name)
 
@@ -126,11 +129,9 @@ async def save_passport_photo(message: types.Message, state: FSMContext):
         )
         return
 
-    # Telegram sends photos as a list of sizes, take the largest one
-    photo_file = message.photo[-1]
-    file_id = photo_file.file_id
+    file_path = await download_photo(bot=bot, message=message, is_passport=False)
 
-    db.update_field(telegram_id=message.from_user.id, field_name="passport_photo", value=file_id)
+    db.update_field(telegram_id=message.from_user.id, field_name="passport_photo", value=file_path)
 
     await message.answer("Karta raqamingizni yuboring")
     await state.set_state(Registration.card_number)
@@ -143,9 +144,9 @@ async def save_id_card_photo1(message: types.Message, state: FSMContext):
                              "ko'rinishida emas")
         return
 
-    file_id = message.photo[-1].file_id
+    file_path = await download_photo(bot=bot, message=message, is_passport=False, side="front")
 
-    db.update_field(telegram_id=message.from_user.id, field_name="id_card_photo1", value=file_id)
+    db.update_field(telegram_id=message.from_user.id, field_name="id_card_photo1", value=file_path)
 
     await message.answer("ID Kartaning orqa qismi rasmini yuboring")
     await state.set_state(Registration.id_card_photo2)
@@ -158,9 +159,9 @@ async def save_id_card_photo2(message: types.Message, state: FSMContext):
                              "ko'rinishida emas")
         return
 
-    file_id = message.photo[-1].file_id
+    file_path = await download_photo(bot=bot, message=message, is_passport=False, side="back")
 
-    db.update_field(telegram_id=message.from_user.id, field_name="id_card_photo2", value=file_id)
+    db.update_field(telegram_id=message.from_user.id, field_name="id_card_photo2", value=file_path)
 
     await message.answer("Karta raqamingizni yuboring")
     await state.set_state(Registration.card_number)
@@ -181,7 +182,7 @@ async def save_card_number(message: types.Message, state: FSMContext):
 
 @router.message(Registration.card_holder_name)
 async def save_card_holder_name(message: types.Message, state: FSMContext):
-    card_holder_name = message.text.strip()
+    card_holder_name = message.text.strip().title()
 
     if not card_holder_name or len(card_holder_name.split()) < 2:
         await message.answer("Ism va Familiya kiritilishi shart")
@@ -207,7 +208,7 @@ async def save_tranzit_number(message: types.Message, state: FSMContext):
 
 @router.message(Registration.bank_name)
 async def save_bank_name(message: types.Message, state: FSMContext):
-    bank_name = message.text.strip()
+    bank_name = message.text.strip().upper()
 
     db.update_field(telegram_id=message.from_user.id, field_name="bank_name", value=bank_name)
     await message.answer("Mutaxassisligingizni kiriting")
@@ -216,7 +217,7 @@ async def save_bank_name(message: types.Message, state: FSMContext):
 
 @router.message(Registration.specialization)
 async def save_specialization(message: types.Message, state: FSMContext):
-    specialization = message.text.strip()
+    specialization = message.text.strip().capitalize()
 
     db.update_field(telegram_id=message.from_user.id, field_name="specialization", value=specialization)
     await message.answer("Iltimos, ozgina kuting ...")
@@ -227,17 +228,72 @@ async def save_specialization(message: types.Message, state: FSMContext):
 
 async def register_user(telegram_id: int):
     user = db.get_user(telegram_id=telegram_id)
-    URL = f"{API_URL}/register-user/"
-    response = requests.post(URL, json=user)
+    document_type = user.get("type_of_document")
 
-    if response.ok:
-        await bot.send_message(
-            telegram_id=telegram_id,
-            text="✅ Ma'lumotlaringiz muvaffaqiyatli saqlandi, raxmat",
-        )
-    else:
-        await bot.send_message(
-            telegram_id=telegram_id,
-            text="Ro'yxatga olishda xatolik yuz berdi, iltimos, dasturchi bilan bog'laning\n"
-                 f"Xatolik statusi: {response.status_code}",
-        )
+    URL = f"{API_URL}/register-user/"
+    form = aiohttp.FormData()
+
+    user_fields = ["telegram_id", "first_name", "last_name", "middle_name",
+                   "phone_number", "type_of_document", "card_number", "card_holder_name",
+                   "tranzit_number", "bank_name", "specialization"]
+
+    for field in user_fields:
+        form.add_field(field, user.get(field))
+
+    files_to_close = []
+
+    if document_type == "passport":
+        passport_path = user.get("passport_photo")
+
+        if passport_path and os.path.exists(os.path.abspath(passport_path)):
+            photo_file = open(os.path.abspath(passport_path), "rb")
+            files_to_close.append(photo_file)
+            form.add_field(
+                name="passport_photo",
+                value=photo_file,
+                filename=os.path.basename(passport_path),
+                content_type="image/jpeg",
+            )
+
+    elif document_type == "id_card":
+        id_front_path = user.get("id_card_photo1")
+        id_back_path = user.get("id_card_photo2")
+
+        if id_front_path and os.path.exists(os.path.abspath(id_front_path)):
+            photo_file = open(os.path.abspath(id_front_path), "rb")
+            files_to_close.append(photo_file)
+            form.add_field(
+                name="id_card_photo1",
+                value=photo_file,
+                filename=os.path.basename(id_front_path),
+                content_type="image/jpeg",
+            )
+
+        if id_back_path and os.path.exists(os.path.abspath(id_back_path)):
+            photo_file = open(os.path.abspath(id_back_path), "rb")
+            files_to_close.append(photo_file)
+            form.add_field(
+                name="id_card_photo2",
+                value=photo_file,
+                filename=os.path.basename(id_back_path),
+                content_type="image/jpeg",
+            )
+
+    async with aiohttp.ClientSession() as session:
+        async with session.post(URL, data=form) as response:
+            if response.status == 200:
+                await bot.send_message(
+                    telegram_id,
+                    "✅ Ma'lumotlaringiz muvaffaqiyatli saqlandi, rahmat",
+                )
+            else:
+                text = await response.text()
+                await bot.send_message(
+                    telegram_id,
+                    "❌ Ro'yxatga olishda xatolik yuz berdi\n"
+                    f"Status: {response.status}\n"
+                    f"Response: {text}",
+                )
+
+    for f in files_to_close:
+        f.close()
