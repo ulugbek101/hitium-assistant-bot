@@ -3,7 +3,6 @@ from aiogram.filters.command import CommandStart
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
 
 from router import router
-from handlers.registration import register_user
 
 
 @router.message(CommandStart())
