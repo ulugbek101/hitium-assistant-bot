@@ -66,9 +66,11 @@ class Database:
             CREATE TABLE IF NOT EXISTS users(
                 id INT PRIMARY KEY AUTO_INCREMENT,
                 telegram_id VARCHAR(255) NOT NULL UNIQUE,
+                lang VARCHAR(2) DEFAULT 'uz',
                 first_name VARCHAR(50) NULL,
                 last_name VARCHAR(50) NULL,
                 middle_name VARCHAR(50) NULL,
+                born_date DATE NULL,
                 phone_number VARCHAR(12) NULL,
                 type_of_document VARCHAR(20) NULL,
                 card_number VARCHAR(16) NULL,
@@ -101,7 +103,8 @@ class Database:
             "first_name", "last_name", "middle_name", "phone_number",
             "type_of_document", "card_number", "card_holder_name",
             "tranzit_number", "bank_name", "specialization",
-            "id_card_photo1", "id_card_photo2", "passport_photo"
+            "id_card_photo1", "id_card_photo2", "passport_photo",
+            "lang", "born_date",
         ]
 
         if field_name not in allowed_fields:
@@ -127,3 +130,17 @@ class Database:
             SELECT * FROM users
         """
         return self.execute(sql, fetchall=True)
+
+    def get_user_language(self, telegram_id: str) -> str:
+        """
+        Returns telegram_id of a users
+        """
+        sql = """
+            SELECT lang FROM users
+            WHERE telegram_id = %s
+        """
+        result = self.execute(sql, (telegram_id,), fetchone=True)
+
+        if result:
+            return result.get('lang')
+        return 'uz'

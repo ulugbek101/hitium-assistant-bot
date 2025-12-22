@@ -2,10 +2,12 @@ from aiogram.fsm.state import State, StatesGroup
 
 
 class Registration(StatesGroup):
+    lang = State()
     phone_number = State()
     first_name = State()
     last_name = State()
     middle_name = State()
+    age = State()
     type_of_document = State()
     id_card_photo1 = State()
     id_card_photo2 = State()
