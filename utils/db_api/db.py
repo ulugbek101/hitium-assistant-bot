@@ -85,6 +85,50 @@ class Database:
         """
         self.execute(sql)
 
+    def create_days_table(self) -> None:
+        """
+        Creates days table for working days
+        """
+        sql = """
+            CREATE TABLE IF NOT EXISTS days(
+                id INT PRIMARY KEY AUTO_INCREMENT,
+                date DATE NOT NULL
+            )
+        """
+        self.execute(sql)
+
+    def create_attendance_table(self) -> None:
+        """
+        Creates attendance table to save workers attendance
+        """
+        sql = """
+            CREATE TABLE IF NOT EXISTS attendance(
+                id INT PRIMARY KEY AUTO_INCREMENT,
+                worker INT NOT NULL REFERENCES users(id),
+                day INT NOT NULL REFERENCES days(id),
+                is_abcent BOOL NOT NULL DEFAULT TRUE
+            )
+        """
+        self.execute(sql)
+
+    def create_attendance_for_user(self, user_id: int, day_id: int) -> None:
+        """
+        Creates attendance for a particular user
+        """
+        sql = """
+            INSERT INTO attendance(worker, day) VALUES(%s, %s)
+        """
+        self.execute(sql, (user_id, day_id), commit=True)
+
+    def create_day(self, date) -> None:
+        """
+        Creates a working day
+        """
+        sql = """
+            INSERT INTO days(date) VALUES(%s)
+        """
+        self.execute(sql, (date,), commit=True)
+
     def initial_registration(self, telegram_id: str) -> None:
         """
         Initial registration of a user
@@ -144,3 +188,21 @@ class Database:
         if result:
             return result.get('lang')
         return 'uz'
+
+    def get_day(self, date: str) -> dict:
+        """
+        Returns day
+        """
+        sql = """
+            SELECT * FROM days WHERE date = %s
+        """
+        return self.execute(sql, (date,), fetchone=True)
+
+    def get_attendance(self, user_id: int, day_id: int) -> dict | None:
+        """
+        Returns attendance of a user or None if it doesn't exist
+        """
+        sql = """
+            SELECT * FROM attendance WHERE worker = %s AND day = %s
+        """
+        return self.execute(sql, (user_id, day_id), fetchone=True)

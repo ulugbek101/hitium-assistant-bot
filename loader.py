@@ -14,6 +14,8 @@ db = Database(db_name=DB_NAME,
               db_port=DB_PORT)
 
 db.create_users_table()
+db.create_days_table()
+db.create_attendance_table()
 
 
 class LanguageMiddleware(BaseMiddleware):

@@ -26,6 +26,7 @@ async def main():
     await bot.set_my_commands([
         BotCommand(command="start", description="Запустить бота"),
         BotCommand(command="tasks", description="Мои задачи"),
+        BotCommand(command="finish_day", description="Уйти пораньше"),
         BotCommand(command="info", description="Обо мне"),
     ])
     start_scheduler()

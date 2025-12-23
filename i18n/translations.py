@@ -16,6 +16,30 @@ TRANSLATIONS = {
         "ru": "ID карта",
     },
 
+    "day_end": {
+        "uz": "Hayrli kech !\nIsni tugatdingizmi ?",
+        "ru": "Добрый вечер !\nВы закончили работу ?",
+    },
+    "day_end_yes": {
+        "uz": "Ha, tugatdim",
+        "ru": "Да, уже закончил",
+    },
+    "day_end_no": {
+        "uz": "Yo'q, hali tugatganim yo'q",
+        "ru": "Нет, пока не закончил",
+    },
+    "day_start": {
+        "uz": "Assalomu alaykum, qalaysiz ?\nSiz bugun ishga chiqdingizmi ?",
+        "ru": "Здравствуйте, как вы ?\nВы уже начали рабочий день ?",
+    },
+    "day_start_yes": {
+        "uz": "Ha, boshlayapman",
+        "ru": "Да, уже начинаю",
+    },
+    "day_start_no": {
+        "uz": "Yo'q",
+        "ru": "Нет",
+    },
     "greeting": {
         "uz": "Assalomu alaykum, {fullname}, davom etish uchun, iltimos, ro'yxatdan o'ting",
         "ru": "Здравствуйте, {fullname}, для продолжения, пожалуйста, пройдите регистрацию",
