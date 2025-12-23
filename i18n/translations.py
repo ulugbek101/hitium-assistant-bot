@@ -7,15 +7,19 @@ TRANSLATIONS = {
         "uz": "📞 Telefon raqamimni ulashish",
         "ru": "📞 Поделиться номером телефона",
     },
-
-
+    "passport_btn": {
+        "uz": "Passport",
+        "ru": "Паспорт",
+    },
+    "id_card": {
+        "uz": "ID karta",
+        "ru": "ID карта",
+    },
 
     "greeting": {
         "uz": "Assalomu alaykum, {fullname}, davom etish uchun, iltimos, ro'yxatdan o'ting",
         "ru": "Здравствуйте, {fullname}, для продолжения, пожалуйста, пройдите регистрацию",
     },
-
-
 
     "already_registered_warning": {
         "uz": "Hurmatli {fullname}, siz bazada mavjud ekansiz, shu sabab ma'lumotlaringiz qayta yangilanadi",
@@ -26,24 +30,24 @@ TRANSLATIONS = {
         "ru": "Выбран неверный язык, пожалуйста, выберите из нижеперечисленных",
     },
 
-
-
     "phone_number_description": {
-        "uz": "Telefon raqamingizni yuboring yoki qo'lda yozib kiriting\n"
-             "Telefon raqam quyidagicha formatda yozilishi kerak:\n"
-             "+998 99 693 73 08\n"
-             "998 99 693 73 08\n"
-             "+998996937308\n"
-             "998996937308",
-        "ru": "Отправьте номер телефона нажав на кнопку или наберите вручную\n"
-             "Номер телефона должен быть в формате:\n"
-             "+998 99 693 73 08\n"
-             "998 99 693 73 08\n"
-             "+998996937308\n"
-             "998996937308",
+        "uz": (
+            "Telefon raqamingizni yuboring yoki qo'lda yozib kiriting\n"
+            "Telefon raqam quyidagicha formatda yozilishi kerak:\n"
+            "+998 99 693 73 08\n"
+            "998 99 693 73 08\n"
+            "+998996937308\n"
+            "998996937308"
+        ),
+        "ru": (
+            "Отправьте номер телефона нажав на кнопку или наберите вручную\n"
+            "Номер телефона должен быть в формате:\n"
+            "+998 99 693 73 08\n"
+            "998 99 693 73 08\n"
+            "+998996937308\n"
+            "998996937308"
+        ),
     },
-
-
 
     "request_first_name": {
         "uz": "Ismingizni kiriting",
@@ -54,23 +58,95 @@ TRANSLATIONS = {
         "ru": "Введите вашу фамилию",
     },
     "request_middle_name": {
-        "uz": "Sharifingiz (Otangiz ismi) ni  kiriting, passportdagi holatini",
-        "ru": "Введите ваше отчество, как написано в пасспорте",
+        "uz": "Sharifingiz (otangiz ismi) ni passportdagi holatida kiriting",
+        "ru": "Введите ваше отчество, как указано в паспорте",
     },
     "request_age": {
         "uz": "Tug'ilgan sanangizni YIL-OY-KUN formatida kiriting, masalan: 1980-01-24",
-        "ru": "Введите дату рождения в формате ГОД-МЕСЯЦ-ДЕНЬ, например 1980-01-24",
+        "ru": "Введите дату рождения в формате ГОД-МЕСЯЦ-ДЕНЬ, например: 1980-01-24",
     },
 
-
+    "request_document_type": {
+        "uz": "Qaysi hujjat turidan foydalanasiz, Passport yoki ID karta ?",
+        "ru": "Каким типом документа вы пользуетесь, Паспорт или ID карта ?",
+    },
 
     "invalid_phone_number": {
         "uz": "Telefon raqam noto'g'ri formatda kiritildi, qaytadan kiriting yoki tugmani bosish orqali yuboring",
         "ru": "Номер телефона указан неверно, введите заново или отправьте по нажатию кнопки",
     },
     "invalid_age": {
-        "uz": "Tug'ilgan sanangiz noto'g'ri formatda kirtildi",
-        "ru": "Неверный формат даты рожения",
+        "uz": "Tug'ilgan sanangiz noto'g'ri formatda kiritildi",
+        "ru": "Неверный формат даты рождения",
+    },
+    "invalid_document_type": {
+        "uz": "Noto'g'ri hujjat turi tanlandi, iltimos, quyida keltirilganlardan tanlang",
+        "ru": "Выбран неверный тип документа, пожалуйста, выберите из указанных выше",
     },
 
+    "passport_photo_request": {
+        "uz": "Passport rasmingizni yuboring",
+        "ru": "Отправьте фотографию паспорта",
+    },
+    "id_card_front_request": {
+        "uz": "ID kartaning old qismi rasmini yuboring",
+        "ru": "Отправьте фото лицевой стороны ID карты",
+    },
+    "id_card_back_request": {
+        "uz": "ID kartaning orqa qismi rasmini yuboring",
+        "ru": "Отправьте фото обратной стороны ID карты",
+    },
+    "invalid_photo_type": {
+        "uz": "Iltimos, rasmni foto ko'rinishida yuboring, matn yoki fayl ko'rinishida emas",
+        "ru": "Пожалуйста, отправьте изображение в виде фото, а не текста или файла",
+    },
+
+    "request_card_number": {
+        "uz": "Karta raqamingizni yuboring",
+        "ru": "Введите номер банковской карты",
+    },
+    "invalid_card_number": {
+        "uz": "Karta raqami noto'g'ri formatda kiritildi",
+        "ru": "Неверный формат номера карты",
+    },
+
+    "request_card_holder_name": {
+        "uz": "Karta egasining ism va familiyasini to'liq kiriting",
+        "ru": "Введите имя и фамилию владельца карты полностью",
+    },
+    "invalid_card_holder_name": {
+        "uz": "Ism va familiya kiritilishi shart",
+        "ru": "Имя и фамилия обязательны для ввода",
+    },
+
+    "request_tranzit_number": {
+        "uz": "Tranzit raqamingizni kiriting (yuridik shaxslar uchun)",
+        "ru": "Введите транзитный счет (для юридических лиц)",
+    },
+    "invalid_tranzit_number": {
+        "uz": "Tranzit raqam noto'g'ri formatda kiritildi",
+        "ru": "Неверный формат транзитного счета",
+    },
+
+    "request_bank_name": {
+        "uz": "Bank nomini kiriting",
+        "ru": "Введите название банка",
+    },
+    "request_specialization": {
+        "uz": "Mutaxassisligingizni kiriting",
+        "ru": "Введите вашу специализацию",
+    },
+
+    "registration_wait": {
+        "uz": "Iltimos, ozgina kuting ...",
+        "ru": "Пожалуйста, подождите ...",
+    },
+    "registration_success": {
+        "uz": "✅ Ma'lumotlaringiz muvaffaqiyatli saqlandi, rahmat",
+        "ru": "✅ Ваши данные успешно сохранены, спасибо",
+    },
+    "registration_error": {
+        "uz": "❌ Ro'yxatdan o'tishda xatolik yuz berdi",
+        "ru": "❌ Произошла ошибка при регистрации",
+    },
 }

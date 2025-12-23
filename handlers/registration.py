@@ -1,7 +1,7 @@
 import os
 import re
+import datetime
 
-from aiogram import F
 from aiogram import types
 from aiogram.client.session import aiohttp
 from aiogram.fsm.context import FSMContext
@@ -21,28 +21,30 @@ async def save_language(message: types.Message, state: FSMContext, lang):
     selected_lang = languages.get(message.text.strip())
 
     if not selected_lang:
-        await message.answer(
-            text=t("wrong_language_warning", lang)
-        )
+        await message.answer(t("wrong_language_warning", lang))
         return
 
-    # Make initial registration of a user
     try:
         db.initial_registration(telegram_id=message.from_user.id)
-    except Exception as _exp:
-        await message.answer(text=t("already_registered_warning", selected_lang).format(fullname=message.from_user.full_name.title()))
+    except Exception:
+        await message.answer(
+            t("already_registered_warning", selected_lang).format(
+                fullname=message.from_user.full_name.title()
+            )
+        )
 
-    db.update_field(telegram_id=message.from_user.id, field_name="lang", value=selected_lang)
+    db.update_field(
+        telegram_id=message.from_user.id,
+        field_name="lang",
+        value=selected_lang,
+    )
 
-    markup = ReplyKeyboardBuilder()
-    markup.button(text=t("phone_number_btn", selected_lang), request_contact=True)
+    kb = ReplyKeyboardBuilder()
+    kb.button(text=t("phone_number_btn", selected_lang), request_contact=True)
 
     await message.answer(
-        text=t("phone_number_description", selected_lang),
-        reply_markup=markup.as_markup(
-            one_time_keyboard=True,
-            resize_keyboard=True,
-        )
+        t("phone_number_description", selected_lang),
+        reply_markup=kb.as_markup(resize_keyboard=True, one_time_keyboard=True),
     )
 
     await state.set_state(Registration.phone_number)
@@ -51,266 +53,283 @@ async def save_language(message: types.Message, state: FSMContext, lang):
 @router.message(Registration.phone_number)
 async def save_phone_number(message: types.Message, state: FSMContext, lang: str):
     phone_number = message.contact.phone_number if message.contact else message.text
-    phone_number = phone_number.replace("+", "")
+    phone_number = phone_number.replace("+", "").replace(" ", "")
 
-    pattern = re.compile(r"^998\d{9}$")
-
-    if pattern.match(phone_number.replace("+", "").replace(" ", "")):
-        await message.answer(text=t("request_first_name", lang), reply_markup=types.ReplyKeyboardRemove())
-        await state.set_state(Registration.first_name)
-
-        db.update_field(telegram_id=message.from_user.id, field_name="phone_number", value=phone_number)
-    else:
+    if not re.fullmatch(r"998\d{9}", phone_number):
         await message.answer(t("invalid_phone_number", lang))
+        return
+
+    db.update_field(
+        telegram_id=message.from_user.id,
+        field_name="phone_number",
+        value=phone_number,
+    )
+
+    await message.answer(t("request_first_name", lang), reply_markup=types.ReplyKeyboardRemove())
+    await state.set_state(Registration.first_name)
 
 
 @router.message(Registration.first_name)
 async def save_first_name(message: types.Message, state: FSMContext, lang: str):
-    first_name = message.text.capitalize()
+    db.update_field(
+        telegram_id=message.from_user.id,
+        field_name="first_name",
+        value=message.text.strip().capitalize(),
+    )
 
-    db.update_field(telegram_id=message.from_user.id, field_name="first_name", value=first_name)
-
-    await message.answer(text=t("request_last_name", lang))
+    await message.answer(t("request_last_name", lang))
     await state.set_state(Registration.last_name)
 
 
 @router.message(Registration.last_name)
 async def save_last_name(message: types.Message, state: FSMContext, lang: str):
-    last_name = message.text.capitalize()
+    db.update_field(
+        telegram_id=message.from_user.id,
+        field_name="last_name",
+        value=message.text.strip().capitalize(),
+    )
 
-    db.update_field(telegram_id=message.from_user.id, field_name="last_name", value=last_name)
-
-    await message.answer(text=t("request_age", lang))
-    await state.set_state(Registration.age)
-
-
-@router.message(Registration.age)
-async def save_age(message: types.Message, state: FSMContext, lang: str):
-    age = message.text.strip()
-
-    pattern = re.compile(r"^\d{4}-\d{2}-\d{2}$")
-
-    if not pattern.match(age):
-        await message.answer(text=t("invalid_age", lang))
-        return
-
-    db.update_field(telegram_id=message.from_user.id, field_name="age", value=age)
-
-    await message.answer(text=t("request_middle_name", lang))
-    await state.set_state(Registration.age)
+    await message.answer(t("request_age", lang))
+    await state.set_state(Registration.middle_name)
 
 
 @router.message(Registration.middle_name)
 async def save_middle_name(message: types.Message, state: FSMContext, lang: str):
-    middle_name = message.text.capitalize()
+    db.update_field(
+        telegram_id=message.from_user.id,
+        field_name="middle_name",
+        value=message.text.strip().capitalize(),
+    )
 
-    db.update_field(telegram_id=message.from_user.id, field_name="middle_name", value=middle_name)
-
-    markup = ReplyKeyboardBuilder()
-    markup.button(text="Passport")
-    markup.button(text="ID Karta")
-    markup.adjust(2)
+    kb = ReplyKeyboardBuilder()
+    kb.button(text=t("passport_btn", lang))
+    kb.button(text=t("id_card", lang))
+    kb.adjust(2)
 
     await message.answer(
-        text="Qaysi hujjat turidan foydalanasiz, Passport yoki ID karta ?",
-        reply_markup=markup.as_markup(resize_keyboard=True)
+        t("request_document_type", lang),
+        reply_markup=kb.as_markup(resize_keyboard=True),
     )
+
+    await state.set_state(Registration.born_year)
+
+
+@router.message(Registration.born_year)
+async def save_age(message: types.Message, state: FSMContext, lang: str):
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", message.text.strip()):
+        await message.answer(t("invalid_age", lang))
+        return
+
+    db.update_field(
+        telegram_id=message.from_user.id,
+        field_name="born_year",
+        value=message.text.strip(),
+    )
+
+    await message.answer(t("request_middle_name", lang))
     await state.set_state(Registration.type_of_document)
 
 
 @router.message(Registration.type_of_document)
 async def save_type_of_document(message: types.Message, state: FSMContext, lang: str):
-    type_of_document = message.text.strip().lower()
+    text = message.text.lower()
 
-    if type_of_document not in ["passport", "id karta"]:
-        await message.answer(text="Noto'g'ri hujjat turi tanlandi, iltimos, quyida keltirilganlardan tanlang")
+    if "passport" in text or "паспорт" in text:
+        doc_type = "passport"
+        await message.answer(t("passport_photo_request", lang), reply_markup=types.ReplyKeyboardRemove())
+        await state.set_state(Registration.passport_photo)
+
+    elif "id" in text:
+        doc_type = "id_card"
+        await message.answer(t("id_card_front_request", lang), reply_markup=types.ReplyKeyboardRemove())
+        await state.set_state(Registration.id_card_photo1)
+
     else:
-        type_of_document = "passport" if type_of_document == "passport" else "id_card"
+        await message.answer(t("invalid_document_type", lang))
+        return
 
-        if type_of_document == "passport":
-            await message.answer("Passport rasmingizni yuboring", reply_markup=types.ReplyKeyboardRemove())
-            await state.set_state(Registration.passport_photo)
-        else:
-            await message.answer("ID Kartangizni old qismi rasmini yuboring", reply_markup=types.ReplyKeyboardRemove())
-            await state.set_state(Registration.id_card_photo1)
-
-        db.update_field(telegram_id=message.from_user.id, field_name="type_of_document", value="passport")
+    db.update_field(
+        telegram_id=message.from_user.id,
+        field_name="type_of_document",
+        value=doc_type,
+    )
 
 
 @router.message(Registration.passport_photo)
 async def save_passport_photo(message: types.Message, state: FSMContext, lang: str):
     if not message.photo:
-        await message.answer(
-            "Iltimos, passport rasmingizni rasm ko'rinishida yuboring, "
-            "matn yoki fayl ko'rinishida emas"
-        )
+        await message.answer(t("invalid_photo_type", lang))
         return
 
-    file_path = await download_photo(bot=bot, message=message, is_passport=False)
+    path = await download_photo(bot=bot, message=message, is_passport=True)
 
-    db.update_field(telegram_id=message.from_user.id, field_name="passport_photo", value=file_path)
+    db.update_field(
+        telegram_id=message.from_user.id,
+        field_name="passport_photo",
+        value=path,
+    )
 
-    await message.answer("Karta raqamingizni yuboring")
+    await message.answer(t("request_card_number", lang))
     await state.set_state(Registration.card_number)
 
 
 @router.message(Registration.id_card_photo1)
 async def save_id_card_photo1(message: types.Message, state: FSMContext, lang: str):
     if not message.photo:
-        await message.answer("Iltimos, ID Kartaning old qismi rasmini rasm ko'rinishida yuboring, matn yoki fayl "
-                             "ko'rinishida emas")
+        await message.answer(t("invalid_photo_type", lang))
         return
 
-    file_path = await download_photo(bot=bot, message=message, is_passport=False, side="front")
+    path = await download_photo(bot=bot, message=message, side="front")
 
-    db.update_field(telegram_id=message.from_user.id, field_name="id_card_photo1", value=file_path)
+    db.update_field(
+        telegram_id=message.from_user.id,
+        field_name="id_card_photo1",
+        value=path,
+    )
 
-    await message.answer("ID Kartaning orqa qismi rasmini yuboring")
+    await message.answer(t("id_card_back_request", lang))
     await state.set_state(Registration.id_card_photo2)
 
 
 @router.message(Registration.id_card_photo2)
 async def save_id_card_photo2(message: types.Message, state: FSMContext, lang: str):
     if not message.photo:
-        await message.answer("Iltimos, ID Kartaning orqa qismi rasmini rasm ko'rinishida yuboring, matn yoki fayl "
-                             "ko'rinishida emas")
+        await message.answer(t("invalid_photo_type", lang))
         return
 
-    file_path = await download_photo(bot=bot, message=message, is_passport=False, side="back")
+    path = await download_photo(bot=bot, message=message, side="back")
 
-    db.update_field(telegram_id=message.from_user.id, field_name="id_card_photo2", value=file_path)
+    db.update_field(
+        telegram_id=message.from_user.id,
+        field_name="id_card_photo2",
+        value=path,
+    )
 
-    await message.answer("Karta raqamingizni yuboring")
+    await message.answer(t("request_card_number", lang))
     await state.set_state(Registration.card_number)
 
 
 @router.message(Registration.card_number)
 async def save_card_number(message: types.Message, state: FSMContext, lang: str):
-    card_number = message.text.strip().replace(" ", "")
+    number = message.text.replace(" ", "")
 
-    if not card_number or len(card_number) < 16 or not card_number.isdigit():
-        await message.answer("Karta raqami noto'g'ri formatda kiritildi")
+    if not number.isdigit() or len(number) < 16:
+        await message.answer(t("invalid_card_number", lang))
         return
 
-    db.update_field(telegram_id=message.from_user.id, field_name="card_number", value=card_number)
-    await message.answer("Karta egasi kim bo'lib chiqadi ? Ism va Familiyani to'liq yozing")
+    db.update_field(
+        telegram_id=message.from_user.id,
+        field_name="card_number",
+        value=number,
+    )
+
+    await message.answer(t("request_card_holder_name", lang))
     await state.set_state(Registration.card_holder_name)
 
 
 @router.message(Registration.card_holder_name)
 async def save_card_holder_name(message: types.Message, state: FSMContext, lang: str):
-    card_holder_name = message.text.strip().title()
+    name = message.text.strip().title()
 
-    if not card_holder_name or len(card_holder_name.split()) < 2:
-        await message.answer("Ism va Familiya kiritilishi shart")
+    if len(name.split()) < 2:
+        await message.answer(t("invalid_card_holder_name", lang))
         return
 
-    db.update_field(telegram_id=message.from_user.id, field_name="card_holder_name", value=card_holder_name)
-    await message.answer("Tranzit raqamingizni kiriting (Yuridik shaxslar uchun)")
+    db.update_field(
+        telegram_id=message.from_user.id,
+        field_name="card_holder_name",
+        value=name,
+    )
+
+    await message.answer(t("request_tranzit_number", lang))
     await state.set_state(Registration.tranzit_number)
 
 
 @router.message(Registration.tranzit_number)
 async def save_tranzit_number(message: types.Message, state: FSMContext, lang: str):
-    tranzit_number = message.text.strip().replace(" ", "")
+    value = message.text.replace(" ", "")
 
-    if not tranzit_number or not tranzit_number.isdigit():
-        await message.answer("Tranzit raqam noto'g'ri formatda kiritildi")
+    if not value.isdigit():
+        await message.answer(t("invalid_tranzit_number", lang))
         return
 
-    db.update_field(telegram_id=message.from_user.id, field_name="tranzit_number", value=tranzit_number)
-    await message.answer("Bank nomini kiriting")
+    db.update_field(
+        telegram_id=message.from_user.id,
+        field_name="tranzit_number",
+        value=value,
+    )
+
+    await message.answer(t("request_bank_name", lang))
     await state.set_state(Registration.bank_name)
 
 
 @router.message(Registration.bank_name)
 async def save_bank_name(message: types.Message, state: FSMContext, lang: str):
-    bank_name = message.text.strip().upper()
+    db.update_field(
+        telegram_id=message.from_user.id,
+        field_name="bank_name",
+        value=message.text.strip().upper(),
+    )
 
-    db.update_field(telegram_id=message.from_user.id, field_name="bank_name", value=bank_name)
-    await message.answer("Mutaxassisligingizni kiriting")
+    await message.answer(t("request_specialization", lang))
     await state.set_state(Registration.specialization)
 
 
 @router.message(Registration.specialization)
 async def save_specialization(message: types.Message, state: FSMContext, lang: str):
-    specialization = message.text.strip().capitalize()
+    db.update_field(
+        telegram_id=message.from_user.id,
+        field_name="specialization",
+        value=message.text.strip().capitalize(),
+    )
 
-    db.update_field(telegram_id=message.from_user.id, field_name="specialization", value=specialization)
-    await message.answer("Iltimos, ozgina kuting ...")
+    await message.answer(t("registration_wait", lang))
     await state.clear()
 
-    await register_user(telegram_id=message.from_user.id)
+    await register_user(message.from_user.id)
 
 
 async def register_user(telegram_id: int):
-    user = db.get_user(telegram_id=telegram_id)
-    document_type = user.get("type_of_document")
-
-    URL = f"{API_URL}/register-user/"
+    user = db.get_user(telegram_id)
     form = aiohttp.FormData()
 
-    user_fields = ["telegram_id", "first_name", "last_name", "middle_name",
-                   "phone_number", "type_of_document", "card_number", "card_holder_name",
-                   "tranzit_number", "bank_name", "specialization", "age", "born_year"]
+    for field in [
+        "telegram_id", "first_name", "last_name", "middle_name",
+        "phone_number", "type_of_document", "card_number",
+        "card_holder_name", "tranzit_number",
+        "bank_name", "specialization", "born_year"
+    ]:
+        value = user.get(field)
 
-    for field in user_fields:
-        form.add_field(field, user.get(field))
+        if isinstance(value, datetime.date):
+            value = value.isoformat()
 
-    files_to_close = []
+        if value is not None:
+            form.add_field(field, str(value))
 
-    if document_type == "passport":
-        passport_path = user.get("passport_photo")
+    files = []
 
-        if passport_path and os.path.exists(os.path.abspath(passport_path)):
-            photo_file = open(os.path.abspath(passport_path), "rb")
-            files_to_close.append(photo_file)
-            form.add_field(
-                name="passport_photo",
-                value=photo_file,
-                filename=os.path.basename(passport_path),
-                content_type="image/jpeg",
-            )
+    if user["type_of_document"] == "passport":
+        path = user.get("passport_photo")
+        if path and os.path.exists(path):
+            f = open(path, "rb")
+            files.append(f)
+            form.add_field("passport_photo", f, filename=os.path.basename(path))
 
-    elif document_type == "id_card":
-        id_front_path = user.get("id_card_photo1")
-        id_back_path = user.get("id_card_photo2")
-
-        if id_front_path and os.path.exists(os.path.abspath(id_front_path)):
-            photo_file = open(os.path.abspath(id_front_path), "rb")
-            files_to_close.append(photo_file)
-            form.add_field(
-                name="id_card_photo1",
-                value=photo_file,
-                filename=os.path.basename(id_front_path),
-                content_type="image/jpeg",
-            )
-
-        if id_back_path and os.path.exists(os.path.abspath(id_back_path)):
-            photo_file = open(os.path.abspath(id_back_path), "rb")
-            files_to_close.append(photo_file)
-            form.add_field(
-                name="id_card_photo2",
-                value=photo_file,
-                filename=os.path.basename(id_back_path),
-                content_type="image/jpeg",
-            )
+    else:
+        for key in ("id_card_photo1", "id_card_photo2"):
+            path = user.get(key)
+            if path and os.path.exists(path):
+                f = open(path, "rb")
+                files.append(f)
+                form.add_field(key, f, filename=os.path.basename(path))
 
     async with aiohttp.ClientSession() as session:
-        async with session.post(URL, data=form) as response:
-            if response.status == 200:
-                await bot.send_message(
-                    telegram_id,
-                    "✅ Ma'lumotlaringiz muvaffaqiyatli saqlandi, rahmat",
-                )
+        async with session.post(f"{API_URL}/register-user/", data=form) as r:
+            if r.status == 200:
+                await bot.send_message(telegram_id, t("registration_success", user["lang"]))
             else:
-                text = await response.text()
-                await bot.send_message(
-                    telegram_id,
-                    "❌ Ro'yxatga olishda xatolik yuz berdi\n"
-                    f"Status: {response.status}\n"
-                    f"Response: {text}",
-                )
+                await bot.send_message(telegram_id, t("registration_error", user["lang"]))
 
-    for f in files_to_close:
+    for f in files:
         f.close()

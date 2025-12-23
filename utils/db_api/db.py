@@ -70,7 +70,7 @@ class Database:
                 first_name VARCHAR(50) NULL,
                 last_name VARCHAR(50) NULL,
                 middle_name VARCHAR(50) NULL,
-                born_date DATE NULL,
+                born_year DATE NULL,
                 phone_number VARCHAR(12) NULL,
                 type_of_document VARCHAR(20) NULL,
                 card_number VARCHAR(16) NULL,
@@ -104,7 +104,7 @@ class Database:
             "type_of_document", "card_number", "card_holder_name",
             "tranzit_number", "bank_name", "specialization",
             "id_card_photo1", "id_card_photo2", "passport_photo",
-            "lang", "born_date",
+            "lang", "born_year",
         ]
 
         if field_name not in allowed_fields:
