@@ -7,7 +7,7 @@ scheduler = AsyncIOScheduler()
 
 def start_scheduler():
     scheduler.start()
-    scheduler.add_job(day_start, 'cron', hour=7, minute=55)
+    scheduler.add_job(day_start, 'cron', hour=1, minute=40)
     scheduler.add_job(day_end, 'cron', hour=17, minute=55)
     scheduler.add_job(create_working_day, 'cron', hour=4, minute=50)
-    scheduler.add_job(create_attendance_for_everyday, 'cron', hour=5, minute=0)
+    scheduler.add_job(create_attendance_for_everyday, 'cron', hour=1, minute=39)

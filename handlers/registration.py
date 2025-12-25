@@ -33,11 +33,7 @@ async def save_language(message: types.Message, state: FSMContext, lang):
             )
         )
 
-    db.update_field(
-        telegram_id=message.from_user.id,
-        field_name="lang",
-        value=selected_lang,
-    )
+    db.update_user_field(telegram_id=message.from_user.id, field_name="lang", value=selected_lang)
 
     kb = ReplyKeyboardBuilder()
     kb.button(text=t("phone_number_btn", selected_lang), request_contact=True)
@@ -59,11 +55,7 @@ async def save_phone_number(message: types.Message, state: FSMContext, lang: str
         await message.answer(t("invalid_phone_number", lang))
         return
 
-    db.update_field(
-        telegram_id=message.from_user.id,
-        field_name="phone_number",
-        value=phone_number,
-    )
+    db.update_user_field(telegram_id=message.from_user.id, field_name="phone_number", value=phone_number)
 
     await message.answer(t("request_first_name", lang), reply_markup=types.ReplyKeyboardRemove())
     await state.set_state(Registration.first_name)
@@ -71,11 +63,8 @@ async def save_phone_number(message: types.Message, state: FSMContext, lang: str
 
 @router.message(Registration.first_name)
 async def save_first_name(message: types.Message, state: FSMContext, lang: str):
-    db.update_field(
-        telegram_id=message.from_user.id,
-        field_name="first_name",
-        value=message.text.strip().capitalize(),
-    )
+    db.update_user_field(telegram_id=message.from_user.id, field_name="first_name",
+                         value=message.text.strip().capitalize())
 
     await message.answer(t("request_last_name", lang))
     await state.set_state(Registration.last_name)
@@ -83,11 +72,8 @@ async def save_first_name(message: types.Message, state: FSMContext, lang: str):
 
 @router.message(Registration.last_name)
 async def save_last_name(message: types.Message, state: FSMContext, lang: str):
-    db.update_field(
-        telegram_id=message.from_user.id,
-        field_name="last_name",
-        value=message.text.strip().capitalize(),
-    )
+    db.update_user_field(telegram_id=message.from_user.id, field_name="last_name",
+                         value=message.text.strip().capitalize())
 
     await message.answer(t("request_age", lang))
     await state.set_state(Registration.middle_name)
@@ -95,11 +81,8 @@ async def save_last_name(message: types.Message, state: FSMContext, lang: str):
 
 @router.message(Registration.middle_name)
 async def save_middle_name(message: types.Message, state: FSMContext, lang: str):
-    db.update_field(
-        telegram_id=message.from_user.id,
-        field_name="middle_name",
-        value=message.text.strip().capitalize(),
-    )
+    db.update_user_field(telegram_id=message.from_user.id, field_name="middle_name",
+                         value=message.text.strip().capitalize())
 
     kb = ReplyKeyboardBuilder()
     kb.button(text=t("passport_btn", lang))
@@ -120,11 +103,7 @@ async def save_age(message: types.Message, state: FSMContext, lang: str):
         await message.answer(t("invalid_age", lang))
         return
 
-    db.update_field(
-        telegram_id=message.from_user.id,
-        field_name="born_year",
-        value=message.text.strip(),
-    )
+    db.update_user_field(telegram_id=message.from_user.id, field_name="born_year", value=message.text.strip())
 
     await message.answer(t("request_middle_name", lang))
     await state.set_state(Registration.type_of_document)
@@ -148,11 +127,7 @@ async def save_type_of_document(message: types.Message, state: FSMContext, lang:
         await message.answer(t("invalid_document_type", lang))
         return
 
-    db.update_field(
-        telegram_id=message.from_user.id,
-        field_name="type_of_document",
-        value=doc_type,
-    )
+    db.update_user_field(telegram_id=message.from_user.id, field_name="type_of_document", value=doc_type)
 
 
 @router.message(Registration.passport_photo)
@@ -163,11 +138,7 @@ async def save_passport_photo(message: types.Message, state: FSMContext, lang: s
 
     path = await download_photo(bot=bot, message=message, is_passport=True)
 
-    db.update_field(
-        telegram_id=message.from_user.id,
-        field_name="passport_photo",
-        value=path,
-    )
+    db.update_user_field(telegram_id=message.from_user.id, field_name="passport_photo", value=path)
 
     await message.answer(t("request_card_number", lang))
     await state.set_state(Registration.card_number)
@@ -181,11 +152,7 @@ async def save_id_card_photo1(message: types.Message, state: FSMContext, lang: s
 
     path = await download_photo(bot=bot, message=message, side="front")
 
-    db.update_field(
-        telegram_id=message.from_user.id,
-        field_name="id_card_photo1",
-        value=path,
-    )
+    db.update_user_field(telegram_id=message.from_user.id, field_name="id_card_photo1", value=path)
 
     await message.answer(t("id_card_back_request", lang))
     await state.set_state(Registration.id_card_photo2)
@@ -199,11 +166,7 @@ async def save_id_card_photo2(message: types.Message, state: FSMContext, lang: s
 
     path = await download_photo(bot=bot, message=message, side="back")
 
-    db.update_field(
-        telegram_id=message.from_user.id,
-        field_name="id_card_photo2",
-        value=path,
-    )
+    db.update_user_field(telegram_id=message.from_user.id, field_name="id_card_photo2", value=path)
 
     await message.answer(t("request_card_number", lang))
     await state.set_state(Registration.card_number)
@@ -217,11 +180,7 @@ async def save_card_number(message: types.Message, state: FSMContext, lang: str)
         await message.answer(t("invalid_card_number", lang))
         return
 
-    db.update_field(
-        telegram_id=message.from_user.id,
-        field_name="card_number",
-        value=number,
-    )
+    db.update_user_field(telegram_id=message.from_user.id, field_name="card_number", value=number)
 
     await message.answer(t("request_card_holder_name", lang))
     await state.set_state(Registration.card_holder_name)
@@ -235,11 +194,7 @@ async def save_card_holder_name(message: types.Message, state: FSMContext, lang:
         await message.answer(t("invalid_card_holder_name", lang))
         return
 
-    db.update_field(
-        telegram_id=message.from_user.id,
-        field_name="card_holder_name",
-        value=name,
-    )
+    db.update_user_field(telegram_id=message.from_user.id, field_name="card_holder_name", value=name)
 
     await message.answer(t("request_tranzit_number", lang))
     await state.set_state(Registration.tranzit_number)
@@ -253,11 +208,7 @@ async def save_tranzit_number(message: types.Message, state: FSMContext, lang: s
         await message.answer(t("invalid_tranzit_number", lang))
         return
 
-    db.update_field(
-        telegram_id=message.from_user.id,
-        field_name="tranzit_number",
-        value=value,
-    )
+    db.update_user_field(telegram_id=message.from_user.id, field_name="tranzit_number", value=value)
 
     await message.answer(t("request_bank_name", lang))
     await state.set_state(Registration.bank_name)
@@ -265,11 +216,7 @@ async def save_tranzit_number(message: types.Message, state: FSMContext, lang: s
 
 @router.message(Registration.bank_name)
 async def save_bank_name(message: types.Message, state: FSMContext, lang: str):
-    db.update_field(
-        telegram_id=message.from_user.id,
-        field_name="bank_name",
-        value=message.text.strip().upper(),
-    )
+    db.update_user_field(telegram_id=message.from_user.id, field_name="bank_name", value=message.text.strip().upper())
 
     await message.answer(t("request_specialization", lang))
     await state.set_state(Registration.specialization)
@@ -277,11 +224,8 @@ async def save_bank_name(message: types.Message, state: FSMContext, lang: str):
 
 @router.message(Registration.specialization)
 async def save_specialization(message: types.Message, state: FSMContext, lang: str):
-    db.update_field(
-        telegram_id=message.from_user.id,
-        field_name="specialization",
-        value=message.text.strip().capitalize(),
-    )
+    db.update_user_field(telegram_id=message.from_user.id, field_name="specialization",
+                         value=message.text.strip().capitalize())
 
     await message.answer(t("registration_wait", lang))
     await state.clear()

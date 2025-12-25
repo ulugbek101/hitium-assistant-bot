@@ -173,4 +173,13 @@ TRANSLATIONS = {
         "uz": "❌ Ro'yxatdan o'tishda xatolik yuz berdi",
         "ru": "❌ Произошла ошибка при регистрации",
     },
+
+    "day_start_success": {
+        "uz": "✅ Siz ishga chiqdingiz, kuningiz hayrli o'tsin !",
+        "ru": "✅ Вы вышли на работу, хорошего дня !",
+    },
+    "day_start_fail": {
+        "uz": "❌ Siz ishga chiqmadingiz, ko'rishguncha hayr !",
+        "ru": "❌ Вы не вышли на работу, до встречи !",
+    },
 }

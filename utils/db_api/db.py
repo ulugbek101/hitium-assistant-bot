@@ -106,7 +106,7 @@ class Database:
                 id INT PRIMARY KEY AUTO_INCREMENT,
                 worker INT NOT NULL REFERENCES users(id),
                 day INT NOT NULL REFERENCES days(id),
-                is_abcent BOOL NOT NULL DEFAULT TRUE
+                is_absent BOOL NOT NULL DEFAULT TRUE
             )
         """
         self.execute(sql)
@@ -139,7 +139,7 @@ class Database:
         """
         self.execute(sql, (telegram_id,), commit=True)
 
-    def update_field(self, telegram_id: str, field_name: str, value: str) -> None:
+    def update_user_field(self, telegram_id: str, field_name: str, value: str) -> None:
         """
         Updates a certain field for a given user.
         """
@@ -156,6 +156,15 @@ class Database:
 
         sql = f"UPDATE users SET {field_name} = %s WHERE telegram_id = %s"
         self.execute(sql, (value, telegram_id), commit=True)
+
+    def update_user_attendance(self, user_id: int, is_absent: bool) -> None:
+        """
+        Updates user's attendance based on
+        """
+        sql = """
+            UPDATE attendance SET is_absent = %s WHERE worker = %s
+        """
+        self.execute(sql, (is_absent, user_id), commit=True)
 
     def get_user(self, telegram_id: str) -> dict:
         """
