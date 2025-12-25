@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List, Dict, Union
 
 import pymysql
@@ -38,6 +39,7 @@ class Database:
         """
         Executes SQL script
         """
+
         if fetchone and fetchall:
             raise ValueError("Cannot use both fetchone and fetchall at the same time.")
 
@@ -49,7 +51,6 @@ class Database:
 
                 if fetchone:
                     data = cursor.fetchone()
-
                 elif fetchall:
                     data = cursor.fetchall()
 
@@ -106,7 +107,9 @@ class Database:
                 id INT PRIMARY KEY AUTO_INCREMENT,
                 worker INT NOT NULL REFERENCES users(id),
                 day INT NOT NULL REFERENCES days(id),
-                is_absent BOOL NOT NULL DEFAULT TRUE
+                is_absent BOOL NOT NULL DEFAULT TRUE,
+                start_time TIME,
+                end_time TIME
             )
         """
         self.execute(sql)
@@ -120,7 +123,7 @@ class Database:
         """
         self.execute(sql, (user_id, day_id), commit=True)
 
-    def create_day(self, date) -> None:
+    def create_day(self, date: datetime.date) -> int:
         """
         Creates a working day
         """
@@ -161,10 +164,28 @@ class Database:
         """
         Updates user's attendance based on
         """
+        day = self.get_day(date=datetime.today().date().strftime("%Y-%m-%d"))
+
         sql = """
-            UPDATE attendance SET is_absent = %s WHERE worker = %s
+            UPDATE attendance SET is_absent = %s WHERE worker = %s AND day = %s
         """
-        self.execute(sql, (is_absent, user_id), commit=True)
+        self.execute(sql, (is_absent, user_id, day.get("id")), commit=True)
+
+    def update_user_attendance_time(self, user_id: int, field_name: str, time: datetime.time):
+        """
+        Updates users' work day start time or work day end time in attendance table
+        """
+
+        if field_name not in ["start_time", "end_time"]:
+            raise ValueError("Should be start or end")
+
+        day_id = self.get_day(date=datetime.today()).get("id")
+
+        sql = f"""
+            UPDATE attendance SET {field_name} = %s WHERE worker = %s AND day = %s
+        """
+
+        self.execute(sql, (time, user_id, day_id), commit=True)
 
     def get_user(self, telegram_id: str) -> dict:
         """
@@ -198,7 +219,7 @@ class Database:
             return result.get('lang')
         return 'uz'
 
-    def get_day(self, date: str) -> dict:
+    def get_day(self, date: datetime.date) -> dict | None:
         """
         Returns day
         """

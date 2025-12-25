@@ -188,7 +188,7 @@ TRANSLATIONS = {
     },
     "day_end_fail": {
         "uz": "❌ Siz ishni yakunlamadingiz, 1 soatdan keyin keyingi xabar keladi, aloqagacha !",
-        "ru": "❌ Вы не завершили работа, через 1 час придет след. напоминание, до связи !",
+        "ru": "❌ Вы не завершили работу, через 1 час придет след. напоминание, до связи !",
     },
 
 }
