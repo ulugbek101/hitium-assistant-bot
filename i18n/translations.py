@@ -182,4 +182,13 @@ TRANSLATIONS = {
         "uz": "❌ Siz ishga chiqmadingiz, ko'rishguncha hayr !",
         "ru": "❌ Вы не вышли на работу, до встречи !",
     },
+    "day_end_success": {
+        "uz": "✅ Siz ishni yakunladingiz, raxmat !",
+        "ru": "✅ Вы завершили работу, спасибо !",
+    },
+    "day_end_fail": {
+        "uz": "❌ Siz ishni yakunlamadingiz, 1 soatdan keyin keyingi xabar keladi, aloqagacha !",
+        "ru": "❌ Вы не завершили работа, через 1 час придет след. напоминание, до связи !",
+    },
+
 }

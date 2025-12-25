@@ -1,5 +1,4 @@
 from aiogram import types
-from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from i18n.translate import t
 from loader import db, dp

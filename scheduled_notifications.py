@@ -34,7 +34,7 @@ async def day_end():
     Task to send a message to all users a question whether a worker finished his/her working day or not
     """
 
-    users = db.get_user()
+    users = db.get_users()
 
     for user in users:
         lang = user.get("lang")
