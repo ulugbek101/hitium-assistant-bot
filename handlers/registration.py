@@ -75,7 +75,7 @@ async def save_last_name(message: types.Message, state: FSMContext, lang: str):
     db.update_user_field(telegram_id=message.from_user.id, field_name="last_name",
                          value=message.text.strip().capitalize())
 
-    await message.answer(t("request_age", lang))
+    await message.answer(t("request_middle_name", lang))
     await state.set_state(Registration.middle_name)
 
 
@@ -84,14 +84,8 @@ async def save_middle_name(message: types.Message, state: FSMContext, lang: str)
     db.update_user_field(telegram_id=message.from_user.id, field_name="middle_name",
                          value=message.text.strip().capitalize())
 
-    kb = ReplyKeyboardBuilder()
-    kb.button(text=t("passport_btn", lang))
-    kb.button(text=t("id_card", lang))
-    kb.adjust(2)
-
     await message.answer(
-        t("request_document_type", lang),
-        reply_markup=kb.as_markup(resize_keyboard=True),
+        t("request_born_year", lang),
     )
 
     await state.set_state(Registration.born_year)
@@ -105,7 +99,12 @@ async def save_age(message: types.Message, state: FSMContext, lang: str):
 
     db.update_user_field(telegram_id=message.from_user.id, field_name="born_year", value=message.text.strip())
 
-    await message.answer(t("request_middle_name", lang))
+    kb = ReplyKeyboardBuilder()
+    kb.button(text=t("passport_btn", lang))
+    kb.button(text=t("id_card", lang))
+    kb.adjust(2)
+
+    await message.answer(t("request_document_type", lang), reply_markup=kb.as_markup(resize_keyboard=True))
     await state.set_state(Registration.type_of_document)
 
 

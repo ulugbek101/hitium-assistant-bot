@@ -85,7 +85,7 @@ TRANSLATIONS = {
         "uz": "Sharifingiz (otangiz ismi) ni passportdagi holatida kiriting",
         "ru": "Введите ваше отчество, как указано в паспорте",
     },
-    "request_age": {
+    "request_born_year": {
         "uz": "Tug'ilgan sanangizni YIL-OY-KUN formatida kiriting, masalan: 1980-01-24",
         "ru": "Введите дату рождения в формате ГОД-МЕСЯЦ-ДЕНЬ, например: 1980-01-24",
     },
