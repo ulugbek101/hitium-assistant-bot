@@ -15,6 +15,10 @@ TRANSLATIONS = {
         "uz": "ID karta",
         "ru": "ID карта",
     },
+    "work_completed_btn": {
+        "uz": "✅ Ish yakunlangani haqida xabar berish",
+        "ru": "✅ Сообщить о выполнение работы"
+    },
 
     "day_end": {
         "uz": "Hayrli kech !\nIsni tugatdingizmi ?",
@@ -190,5 +194,14 @@ TRANSLATIONS = {
         "uz": "❌ Siz ishni yakunlamadingiz, 1 soatdan keyin keyingi xabar keladi, aloqagacha !",
         "ru": "❌ Вы не завершили работу, через 1 час придет след. напоминание, до связи !",
     },
+
+    "deadline": {
+        "uz": "Tugatish vaqti",
+        "ru": "Дата завершения",
+    },
+    "description": {
+        "uz": "Ta'rifi",
+        "ru": "Описание",
+    }
 
 }
