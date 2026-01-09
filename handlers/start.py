@@ -5,7 +5,6 @@ from aiogram.utils.keyboard import ReplyKeyboardBuilder
 
 from enums import languages
 from router import router
-from i18n.translate import t
 from states.registration import Registration
 
 

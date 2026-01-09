@@ -48,6 +48,15 @@ TRANSLATIONS = {
         "uz": "Assalomu alaykum, {fullname}, davom etish uchun, iltimos, ro'yxatdan o'ting",
         "ru": "Здравствуйте, {fullname}, для продолжения, пожалуйста, пройдите регистрацию",
     },
+    "specializations_fetch_fail": {
+        "uz": "Mutaxassisliklarni yuklashda xatolik yuz berdi, qo'lda yozib yuboring",
+        "ru": "Не удалось загрузить профессии, введите вручную"
+    },
+    "invalid_specialization": {
+            "uz": "Mutaxassislik nomi noto'g'ri kiritilgan",
+            "ru": "Выбран неверный тип профессии",
+    },
+
 
     "already_registered_warning": {
         "uz": "Hurmatli {fullname}, siz bazada mavjud ekansiz, shu sabab ma'lumotlaringiz qayta yangilanadi",

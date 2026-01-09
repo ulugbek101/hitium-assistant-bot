@@ -5,7 +5,9 @@ import datetime
 from aiogram import types
 from aiogram.client.session import aiohttp
 from aiogram.fsm.context import FSMContext
+from aiogram.types import ReplyKeyboardRemove
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
+from aiohttp import ClientTimeout
 
 from enums import languages
 from i18n.translate import t
@@ -16,12 +18,15 @@ from states.registration import Registration
 from utils.helpers import download_photo
 
 
+HTTP_TIMEOUT = ClientTimeout(total=15)
+
+
 @router.message(Registration.lang)
-async def save_language(message: types.Message, state: FSMContext, lang):
+async def save_language(message: types.Message, state: FSMContext, lang: str):
     selected_lang = languages.get(message.text.strip())
 
     if not selected_lang:
-        await message.answer(t("wrong_language_warning", lang))
+        await message.answer(t("wrong_language_warning", lang=lang))
         return
 
     try:
@@ -175,7 +180,7 @@ async def save_id_card_photo2(message: types.Message, state: FSMContext, lang: s
 async def save_card_number(message: types.Message, state: FSMContext, lang: str):
     number = message.text.replace(" ", "")
 
-    if not number.isdigit() or len(number) < 16:
+    if not re.fullmatch(r"\d{16}", number):
         await message.answer(t("invalid_card_number", lang))
         return
 
@@ -217,7 +222,21 @@ async def save_tranzit_number(message: types.Message, state: FSMContext, lang: s
 async def save_bank_name(message: types.Message, state: FSMContext, lang: str):
     db.update_user_field(telegram_id=message.from_user.id, field_name="bank_name", value=message.text.strip().upper())
 
-    await message.answer(t("request_specialization", lang))
+    markup = ReplyKeyboardBuilder()
+
+    async with aiohttp.ClientSession(timeout=HTTP_TIMEOUT) as session:
+        async with session.get(f"{API_URL}/specializations/") as r:
+            if r.status == 200:
+                specialization_names = await r.json()
+
+                for specialization_name in specialization_names:
+                    markup.button(text=specialization_name)
+                markup.adjust(2)
+
+            else:
+                await message.answer(text=t("specializations_fetch_fail", lang=lang))
+
+    await message.answer(t("request_specialization", lang), reply_markup=markup.as_markup(resize_keyboard=True, one_time_keyboard=True))
     await state.set_state(Registration.specialization)
 
 
@@ -226,7 +245,21 @@ async def save_specialization(message: types.Message, state: FSMContext, lang: s
     db.update_user_field(telegram_id=message.from_user.id, field_name="specialization",
                          value=message.text.strip().capitalize())
 
-    await message.answer(t("registration_wait", lang))
+    async with aiohttp.ClientSession(timeout=HTTP_TIMEOUT) as session:
+        async with session.get(f"{API_URL}/specializations/") as r:
+            if r.status == 200:
+                specialization_names = await r.json()
+                specialization_names = list(map(lambda name: name.lower(), specialization_names))
+
+                if message.text.lower() not in specialization_names:
+                    await message.answer(text=t("invalid_specialization", lang=lang))
+                    return
+
+            else:
+                await message.answer(text=t("specializations_fetch_fail", lang=lang))
+                return
+
+    await message.answer(t("registration_wait", lang), reply_markup=ReplyKeyboardRemove())
     await state.clear()
 
     await register_user(message.from_user.id)
@@ -267,7 +300,7 @@ async def register_user(telegram_id: int):
                 files.append(f)
                 form.add_field(key, f, filename=os.path.basename(path))
 
-    async with aiohttp.ClientSession() as session:
+    async with aiohttp.ClientSession(timeout=HTTP_TIMEOUT) as session:
         async with session.post(f"{API_URL}/register-user/", data=form) as r:
             if r.status == 200:
                 await bot.send_message(telegram_id, t("registration_success", user["lang"]))

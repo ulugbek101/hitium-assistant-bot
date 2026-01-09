@@ -3,7 +3,7 @@ from datetime import date
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from i18n.translate import t
-from loader import bot, db
+from loader import bot, db, ADMINS
 from utils.helpers import check_working_day
 
 
@@ -14,6 +14,10 @@ async def day_start():
 
     users = db.get_users()
 
+    successes = []
+    fails = []
+    total = len(users)
+
     for user in users:
         lang = user.get("lang")
 
@@ -22,11 +26,33 @@ async def day_start():
         markup.button(text=t(key="day_start_yes", lang=lang), callback_data="day_start:yes")
         markup.adjust(1)
 
-        await bot.send_message(
-            chat_id=user.get("telegram_id"),
-            text=t(key="day_start", lang=lang),
-            reply_markup=markup.as_markup(),
-        )
+        try:
+            await bot.send_message(
+                chat_id=user.get("telegram_id"),
+                text=t(key="day_start", lang=lang),
+                reply_markup=markup.as_markup(),
+            )
+            successes.append({"first_name": user.get("first_name"), "last_name": user.get("last_name")})
+        except:
+            fails.append({"first_name": user.get("first_name"), "last_name": user.get("last_name")})
+
+    failed_users = ", ".join([f"{fail.get('first_name')} {fail.get('last_name')}".title() for fail in fails])
+    msg = ("Сообщение о начале рабочего дня отправлено\n\n"
+           f"Всего пользователей: {total}\n"
+           f"Всего отправлено: {successes}\n"
+           f"Не отправлено: {len(fails)}\n\n")
+
+    if len(fails) > 0:
+        msg += f"Не удалось отправить пользователям: {failed_users}"
+
+    for admin in ADMINS:
+        try:
+            await bot.send_message(
+                chat_id=admin,
+                text=msg,
+            )
+        except:
+            pass
 
 
 async def day_end():
@@ -36,7 +62,20 @@ async def day_end():
 
     users = db.get_users()
 
+    successes = []
+    fails = []
+    total = len(users)
+
     for user in users:
+        # Chech if user started working day
+        user_id = db.get_user(telegram_id=user.get("telegram_id")).get("id")
+        day_id = db.get_day(date=date.today()).get("id")
+        is_user_worked_today = db.get_attendance(user_id=user_id, day_id=day_id).get("start_time")
+
+        if not is_user_worked_today:
+            fails.append({"first_name": user.get("first_name"), "last_name": user.get("last_name")})
+            continue
+
         lang = user.get("lang")
 
         markup = InlineKeyboardBuilder()
@@ -44,11 +83,33 @@ async def day_end():
         markup.button(text=t(key="day_end_yes", lang=lang), callback_data="day_end:yes")
         markup.adjust(1)
 
-        await bot.send_message(
-            chat_id=user.get("telegram_id"),
-            text=t(key="day_end", lang=lang),
-            reply_markup=markup.as_markup(),
-        )
+        try:
+            await bot.send_message(
+                chat_id=user.get("telegram_id"),
+                text=t(key="day_end", lang=lang),
+                reply_markup=markup.as_markup(),
+            )
+            successes.append({"first_name": user.get("first_name"), "last_name": user.get("last_name")})
+        except:
+            fails.append({"first_name": user.get("first_name"), "last_name": user.get("last_name")})
+
+    failed_users = ", ".join([f"{fail.get('first_name')} {fail.get('last_name')}".title() for fail in fails])
+    msg = ("Сообщение о завершении рабочего дня отправлено\n\n"
+           f"Всего пользователей: {total}\n"
+           f"Всего отправлено: {successes}\n"
+           f"Не отправлено: {len(fails)}\n\n")
+
+    if len(fails) > 0:
+        msg += f"Не удалось отправить пользователям: {failed_users}"
+
+    for admin in ADMINS:
+        try:
+            await bot.send_message(
+                chat_id=admin,
+                text=msg,
+            )
+        except:
+            pass
 
 
 def create_working_day():
