@@ -1,8 +1,9 @@
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-
+from pytz import timezone
 from scheduled_notifications import day_start, day_end, create_working_day, create_attendance_for_everyday
 
-scheduler = AsyncIOScheduler()
+tz = timezone("Asia/Tashkent")
+scheduler = AsyncIOScheduler(timezone=tz)
 
 
 def start_scheduler():
