@@ -63,12 +63,11 @@ async def day_end():
     """
     Task to send a message to all users a question whether a worker finished his/her working day or not
     """
+    successes = []
+    fails = []
+    total = len(users)
 
     users = db.get_users()
-
-    # successes = []
-    # fails = []
-    # total = len(users)
 
     for user in users:
         # Chech if user started working day
@@ -77,8 +76,8 @@ async def day_end():
         is_user_worked_today = db.get_attendance(user_id=user_id, day_id=day_id).get("start_time")
         is_user_finished_already = db.get_attendance(user_id=user_id, day_id=day_id).get("end_time")
 
-        if not is_user_worked_today or is_user_finished_already:
-            # fails.append({"first_name": user.get("first_name"), "last_name": user.get("last_name")})
+        if not is_user_worked_today or not is_user_finished_already:
+            fails.append({"first_name": user.get("first_name"), "last_name": user.get("last_name")})
             continue
 
         lang = user.get("lang")
@@ -94,28 +93,28 @@ async def day_end():
                 text=t(key="day_end", lang=lang),
                 reply_markup=markup.as_markup(),
             )
-            # successes.append({"first_name": user.get("first_name"), "last_name": user.get("last_name")})
+            successes.append({"first_name": user.get("first_name"), "last_name": user.get("last_name")})
         except:
-            # fails.append({"first_name": user.get("first_name"), "last_name": user.get("last_name")})
+            fails.append({"first_name": user.get("first_name"), "last_name": user.get("last_name")})
             pass
 
-    # failed_users = ", ".join([f"{fail.get('first_name')} {fail.get('last_name')}".title() for fail in fails])
-    # msg = ("Сообщение о завершении рабочего дня отправлено\n\n"
-    #        f"Всего пользователей: {total}\n"
-    #        f"Всего отправлено: {len(successes)}\n"
-    #        f"Не отправлено: {len(fails)}\n\n")
+    failed_users = ", ".join([f"{fail.get('first_name')} {fail.get('last_name')}".title() for fail in fails])
+    msg = ("Сообщение о завершении рабочего дня отправлено\n\n"
+           f"Всего пользователей: {total}\n"
+           f"Всего отправлено: {len(successes)}\n"
+           f"Не отправлено: {len(fails)}\n\n")
 
-    # if len(fails) > 0:
-    #     msg += f"Не удалось отправить пользователям: {failed_users}"
+    if len(fails) > 0:
+        msg += f"Не удалось отправить пользователям: {failed_users}"
 
-    # for admin in ADMINS:
-    #     try:
-    #         await bot.send_message(
-    #             chat_id=admin,
-    #             text=msg,
-    #         )
-    #     except:
-    #         pass
+    for admin in ADMINS:
+        try:
+            await bot.send_message(
+                chat_id=admin,
+                text=msg,
+            )
+        except:
+            pass
 
 
 def create_working_day():
