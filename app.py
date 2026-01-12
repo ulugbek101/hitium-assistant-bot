@@ -8,7 +8,14 @@ from aiogram.types import BotCommand
 from loader import dp, bot
 from handlers.start import router
 from scheduler import start_scheduler
-from config import MEDIA_ROOT
+from config import MEDIA_ROOT, ADMINS
+
+async def notify_admins():
+    for admin in ADMINS:
+        await bot.send_message(
+            chat_id=admin,
+            text="Бот запущен!",
+        )
 
 
 def ensure_media_dirs():
@@ -30,6 +37,7 @@ async def main():
         BotCommand(command="info", description="Обо мне"),
     ])
     start_scheduler()
+    await notify_admins()
     await dp.start_polling(bot)
 
 
