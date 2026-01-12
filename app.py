@@ -14,7 +14,7 @@ async def notify_admins():
     for admin in ADMINS:
         await bot.send_message(
             chat_id=admin,
-            text="Бот запущен!",
+            text="Бот запущен/перезапущен c обновлениями!",
         )
 
 
