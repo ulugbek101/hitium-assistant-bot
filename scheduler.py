@@ -80,8 +80,8 @@ def start_scheduler():
     scheduler.add_job(
         auto_close_all_open_days,
         trigger="cron",
-        hour=15,
-        minute=34,
+        hour=21,
+        minute=0,
         id="attendance_cutoff_21_00",
         replace_existing=True,
     )
