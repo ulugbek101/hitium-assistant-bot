@@ -240,8 +240,10 @@ class Database:
 
     def get_users_with_open_attendance(self) -> list[dict]:
         """
-        Returns users who have attendance opened for today
-        (attendance exists, but end_time is NULL)
+        Returns users who:
+        - have attendance for today
+        - HAVE started their working day (start_time IS NOT NULL)
+        - HAVE NOT ended their working day yet (end_time IS NULL)
         """
         sql = """
             SELECT
@@ -254,6 +256,7 @@ class Database:
             JOIN users u ON u.id = a.worker
             JOIN days d ON d.id = a.day
             WHERE d.date = %s
+            AND a.start_time IS NOT NULL
             AND a.end_time IS NULL
         """
         today = datetime.today().date()
