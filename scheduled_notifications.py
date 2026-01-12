@@ -39,7 +39,7 @@ async def day_start():
     failed_users = ", ".join([f"{fail.get('first_name')} {fail.get('last_name')}".title() for fail in fails])
     msg = ("Сообщение о начале рабочего дня отправлено\n\n"
            f"Всего пользователей: {total}\n"
-           f"Всего отправлено: {len(successes}\n"
+           f"Всего отправлено: {len(successes)}\n"
            f"Не отправлено: {len(fails)}\n\n")
 
     if len(fails) > 0:
