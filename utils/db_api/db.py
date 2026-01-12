@@ -137,7 +137,7 @@ class Database:
         Initial registration of a user
         """
         sql = """
-            INSERT INTO users(telegram_id) 
+            INSERT INTO users(telegram_id)
             VALUES (%s)
         """
         self.execute(sql, (telegram_id,), commit=True)
@@ -236,3 +236,25 @@ class Database:
             SELECT * FROM attendance WHERE worker = %s AND day = %s
         """
         return self.execute(sql, (user_id, day_id), fetchone=True)
+
+
+    def get_users_with_open_attendance(self) -> list[dict]:
+        """
+        Returns users who have attendance opened for today
+        (attendance exists, but end_time is NULL)
+        """
+        sql = """
+            SELECT
+                u.*,
+                a.id AS attendance_id,
+                a.start_time,
+                a.end_time,
+                a.is_absent
+            FROM attendance a
+            JOIN users u ON u.id = a.worker
+            JOIN days d ON d.id = a.day
+            WHERE d.date = %s
+            AND a.end_time IS NULL
+        """
+        today = datetime.today().date()
+        return self.execute(sql, (today,), fetchall=True)
