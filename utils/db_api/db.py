@@ -204,7 +204,7 @@ class Database:
     
         # Update the time
         sql = f"UPDATE attendance SET {field_name} = %s WHERE worker = %s AND day = %s"
-        self.execute(sql, (time_value, user_id, day_id), commit=True)
+        self.execute(sql, (time, user_id, day_id), commit=True)
 
     def get_user(self, telegram_id: str) -> dict:
         """
