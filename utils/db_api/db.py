@@ -160,49 +160,47 @@ class Database:
         sql = f"UPDATE users SET {field_name} = %s WHERE telegram_id = %s"
         self.execute(sql, (value, telegram_id), commit=True)
 
-    def update_user_attendance(self, user_id: int, is_absent: bool, day_date: date = None) -> None:
+    def update_user_attendance(self, user_id: int, is_absent: bool) -> None:
         """
-        Updates user's attendance (is_absent) for a given day.
-        Defaults to today if day_date is not provided.
+        Updates user's attendance (is_absent) for today
         """
-        if day_date is None:
-            day_date = date.today()
+        today = date.today()
     
-        # Get or create day
-        day = self.get_day(day_date)
+        # Get or create today's day
+        day = self.get_day(today)
         if not day:
-            day_id = self.create_day(day_date)
+            day_id = self.create_day(today)
         else:
             day_id = day.get("id")
     
         # Update attendance
-        sql = """
-            UPDATE attendance SET is_absent = %s WHERE worker = %s AND day = %s
-        """
+        sql = "UPDATE attendance SET is_absent = %s WHERE worker = %s AND day = %s"
         self.execute(sql, (is_absent, user_id, day_id), commit=True)
 
-    def update_user_attendance_time(self, user_id: int, field_name: str, time_value: datetime.time, day_date: date = None):
+    def update_user_attendance_time(self, user_id: int, field_name: str, time: datetime.time):
         """
-        Updates user's work day start_time or end_time for a given day.
-        Defaults to today if day_date is not provided.
+        Updates user's start_time or end_time for today
         """
         if field_name not in ["start_time", "end_time"]:
-            raise ValueError("Field must be 'start_time' or 'end_time'")
+            raise ValueError("Should be 'start_time' or 'end_time'")
     
-        if day_date is None:
-            day_date = date.today()
+        today = date.today()
     
-        # Get or create day
-        day = self.get_day(day_date)
+        # Get or create today's day
+        day = self.get_day(today)
         if not day:
-            day_id = self.create_day(day_date)
+            day_id = self.create_day(today)
         else:
             day_id = day.get("id")
     
-        # Check if attendance exists
+        # Ensure attendance exists
         attendance = self.get_attendance(user_id, day_id)
         if not attendance:
             self.create_attendance_for_user(user_id, day_id)
+    
+        # Update the time
+        sql = f"UPDATE attendance SET {field_name} = %s WHERE worker = %s AND day = %s"
+        self.execute(sql, (time, user_id, day_id), commit=True)
     
         # Update the time
         sql = f"UPDATE attendance SET {field_name} = %s WHERE worker = %s AND day = %s"
