@@ -43,5 +43,5 @@ async def main():
 
 if __name__ == "__main__":
     dp.include_router(router=router)
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",)
     asyncio.run(main())
