@@ -72,7 +72,7 @@ async def day_end():
     for user in users:
         # Chech if user started working day
         user_id = db.get_user(telegram_id=user.get("telegram_id")).get("id")
-        day_id = db.get_day(date=date.today()).get("id")
+        day_id = db.get_day(date.today()).get("id")
         is_user_worked_today = db.get_attendance(user_id=user_id, day_id=day_id).get("start_time")
         is_user_finished_already = db.get_attendance(user_id=user_id, day_id=day_id).get("end_time")
 
