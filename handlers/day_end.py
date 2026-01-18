@@ -1,3 +1,4 @@
+from functools import partial
 from datetime import timedelta
 from aiogram import types
 
@@ -18,6 +19,12 @@ async def end_working_day(call: types.CallbackQuery, lang: str):
 
     now = now_tashkent()
 
+    # Skip, if worker is finishing day next day or after CUT OFF (21:00)
+    is_user_already_finished = (db.get_attendance(user_id=user.get("id"), day_id=now.date()) or {}).get("end_time")
+    if not is_user_already_finished:
+        await call.message.delete_reply_markup()
+        return
+
     if is_day_ended:
         db.update_user_attendance(
             user_id=user["id"],
@@ -27,8 +34,9 @@ async def end_working_day(call: types.CallbackQuery, lang: str):
             user_id=user["id"],
             field_name="end_time",
             time=now.time()
-        )
+            )
 
+        await call.message.delete_reply_markup()
         await call.message.answer(
             text=t(key="day_end_success", lang=lang)
         )
@@ -45,10 +53,11 @@ async def end_working_day(call: types.CallbackQuery, lang: str):
                 day_end,
                 trigger="date",
                 run_date=run_time,
-                id=f"day_end_{user['id']}",
+                id=f"day_end_remainder_for_user_with_id_{user.get('id')}",
                 replace_existing=True,
                 kwargs={
-                    "user_id": user["id"],
+                    "again": True,
+                    "chat_id": telegram_id,
                     "lang": lang,
                 },
             )

@@ -59,62 +59,38 @@ async def day_start():
             pass
 
 
-async def day_end():
+async def day_end(again=False, chat_id=None, lang=None):
     """
     Task to send a message to all users a question whether a worker finished his/her working day or not
     """
-    users = db.get_users()
+    if not again:
+        users = db.get_users()
+
+        # TODO: Filter only worker who strated a day
+        for user in users:
+            lang = user.get("lang")
+
+            await send_day_end_message(chat_id=user.get("telegram_id"), lang=lang)
     
-    successes = []
-    fails = []
-    total = len(users)
+    # If day end message is sending 1 hour later after worker rejected to end day
+    else:
+        await send_day_end_message(chat_id=chat_id, lang=lang)
 
-    for user in users:
-        # Chech if user started working day
-        user_id = db.get_user(telegram_id=user.get("telegram_id")).get("id")
-        day_id = db.get_day(date.today()).get("id")
-        # is_user_worked_today = db.get_attendance(user_id=user_id, day_id=day_id).get("start_time")
-        # is_user_finished_already = db.get_attendance(user_id=user_id, day_id=day_id).get("end_time") == None
 
-        # if not is_user_worked_today or is_user_finished_already:
-            # fails.append({"first_name": user.get("first_name"), "last_name": user.get("last_name")})
-            # continue
+async def send_day_end_message(chat_id, lang=None):
+    markup = InlineKeyboardBuilder()
+    markup.button(text=t(key="day_end_no", lang=lang), callback_data="day_end:no")
+    markup.button(text=t(key="day_end_yes", lang=lang), callback_data="day_end:yes")
+    markup.adjust(1)
 
-        lang = user.get("lang")
-
-        markup = InlineKeyboardBuilder()
-        markup.button(text=t(key="day_end_no", lang=lang), callback_data="day_end:no")
-        markup.button(text=t(key="day_end_yes", lang=lang), callback_data="day_end:yes")
-        markup.adjust(1)
-
-        try:
-            await bot.send_message(
-                chat_id=user.get("telegram_id"),
-                text=t(key="day_end", lang=lang),
-                reply_markup=markup.as_markup(),
-            )
-            successes.append({"first_name": user.get("first_name"), "last_name": user.get("last_name")})
-        except:
-            fails.append({"first_name": user.get("first_name"), "last_name": user.get("last_name")})
-            pass
-
-    failed_users = ", ".join([f"{fail.get('first_name')} {fail.get('last_name')}".title() for fail in fails])
-    msg = ("Сообщение о завершении рабочего дня отправлено\n\n"
-           f"Всего пользователей: {total}\n"
-           f"Всего отправлено: {len(successes)}\n"
-           f"Не отправлено: {len(fails)}\n\n")
-
-    if len(fails) > 0:
-        msg += f"Не удалось отправить пользователям: {failed_users}"
-
-    for admin in ADMINS:
-        try:
-            await bot.send_message(
-                chat_id=admin,
-                text=msg,
-            )
-        except:
-            pass
+    try:
+        await bot.send_message(
+            chat_id=chat_id,
+            text=t(key="day_end", lang=lang),
+            reply_markup=markup.as_markup(),
+        )
+    except:
+        pass
 
 
 def create_working_day():
@@ -168,11 +144,11 @@ def auto_close_all_open_days():
 
     for user in users:
         db.update_user_attendance(
-            user_id=user["id"],
+            user_id=user.get("id"),
             is_absent=1
         )
         db.update_user_attendance_time(
-            user_id=user["id"],
+            user_id=user("id"),
             field_name="end_time",
             time=CUTOFF_TIME
         )

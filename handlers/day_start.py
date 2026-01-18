@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 from zoneinfo import ZoneInfo
 from aiogram import types
 
@@ -8,9 +8,17 @@ from router import router
 
 @router.callback_query(lambda call: call.data.startswith("day_start"))
 async def start_working_day(call: types.CallbackQuery, lang: str):
-    is_day_started = call.data.split(":")[-1] == "yes"
     telegram_id = call.from_user.id
+    is_day_started = call.data.split(":")[-1] == "yes"
+ 
     user = db.get_user(telegram_id=telegram_id)
+    day = db.get_day(day_date=date.today())
+    is_user_already_checked = (db.get_attendance(user_id=user.get("id"), day_id=day.get("id")) or {}).get("start_time")
+
+    # Skip user check if already checked and remove unnecessary keyboard to avoid next random click on it
+    if is_user_already_checked: 
+        await call.message.delete_reply_markup()
+        return
 
     # Update is_absent
     db.update_user_attendance(user_id=user.get("id"), is_absent=int(not is_day_started))

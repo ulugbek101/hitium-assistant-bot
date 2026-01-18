@@ -1,7 +1,8 @@
-# scheduler.py
-
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from zoneinfo import ZoneInfo
+
+from loader import DB_NAME, DB_HOST, DB_USER, DB_PASSWORD, DB_PORT
 
 from scheduled_notifications import (
     day_start,
@@ -16,10 +17,31 @@ from scheduled_notifications import (
 # -------------------------------------------------
 TASHKENT_TZ = ZoneInfo("Asia/Tashkent")
 
+
+# -------------------------------------------------
+# JobStore (DB-backed)
+# -------------------------------------------------
+jobstores = {
+    "default": SQLAlchemyJobStore(
+        # PostgreSQL (PROD):
+        # url="postgresql+psycopg2://user:password@localhost:5432/hitium_bot_jobs"
+
+        # MySQL (PROD):
+        url=f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+
+        # SQLite (DEV ONLY):
+        # url="sqlite:///hitium_bot_jobs.sqlite"
+    )
+}
+
+
 # -------------------------------------------------
 # Scheduler instance (SINGLETON)
 # -------------------------------------------------
-scheduler = AsyncIOScheduler(timezone=TASHKENT_TZ)
+scheduler = AsyncIOScheduler(
+    timezone=TASHKENT_TZ,
+    jobstores=jobstores,
+)
 
 
 def start_scheduler():
@@ -39,7 +61,7 @@ def start_scheduler():
         create_working_day,
         trigger="cron",
         hour=5,
-        minute=55,
+        minute=50,
         id="create_working_day",
         replace_existing=True,
     )
