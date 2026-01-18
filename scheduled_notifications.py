@@ -16,6 +16,10 @@ async def day_start():
     Task to send a message to all users a question whether a worker started his/her working day or not
     """
 
+    # Skip, if today is not a working day
+    is_working_day = check_working_day()
+    if not is_working_day: return
+
     users = db.get_users()
 
     successes = []
@@ -63,13 +67,21 @@ async def day_end(again=False, chat_id=None, lang=None):
     """
     Task to send a message to all users a question whether a worker finished his/her working day or not
     """
+    
+    # Skip, if today is not a working day
+    is_working_day = check_working_day()
+    if not is_working_day: return
+
     if not again:
         users = db.get_users()
 
-        # TODO: Filter only worker who strated a day
         for user in users:
+            day = date.today()
+            attendance = (db.get_attendance(user_id=user.get("id"), day_id=day.get("id")) or {}).get("start_time")
+            
+            if not attendance: return
+            
             lang = user.get("lang")
-
             await send_day_end_message(chat_id=user.get("telegram_id"), lang=lang)
     
     # If day end message is sending 1 hour later after worker rejected to end day
@@ -140,6 +152,11 @@ def auto_close_all_open_days():
     Closes attendance for all users who did not end the day manually.
     Runs every day at 21:00 Asia/Tashkent.
     """
+
+    # Cancel job, if today is not a working day
+    is_working_day = check_working_day()
+    if not is_working_day: return
+
     users = db.get_users_with_open_attendance()
 
     for user in users:
