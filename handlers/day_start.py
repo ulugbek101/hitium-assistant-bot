@@ -23,9 +23,10 @@ async def start_working_day(call: types.CallbackQuery, lang: str):
     # Update is_absent
     db.update_user_attendance(user_id=user.get("id"), is_absent=int(not is_day_started))
 
-    # Update start_time with Asia/Tashkent timezone
-    tashkent_time = datetime.now(ZoneInfo("Asia/Tashkent")).time()
-    db.update_user_attendance_time(user_id=user.get("id"), field_name="start_time", time=tashkent_time)
+    if is_day_started:
+        # Update start_time with Asia/Tashkent timezone
+        tashkent_time = datetime.now(ZoneInfo("Asia/Tashkent")).time()
+        db.update_user_attendance_time(user_id=user.get("id"), field_name="start_time", time=tashkent_time)
 
     # Send response
     day_start_message = "day_start_success" if is_day_started else "day_start_fail"
