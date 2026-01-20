@@ -18,9 +18,10 @@ async def end_working_day(call: types.CallbackQuery, lang: str):
     user = db.get_user(telegram_id=telegram_id)
 
     now = now_tashkent()
+    day = db.get_day(now.date())
 
     # Skip, if worker is finishing day next day or after CUT OFF (21:00)
-    is_user_already_finished = (db.get_attendance(user_id=user.get("id"), day_id=now.date()) or {}).get("end_time")
+    is_user_already_finished = (db.get_attendance(user_id=user.get("id"), day_id=day.get("id")) or {}).get("end_time")
     if not is_user_already_finished:
         await call.message.delete_reply_markup()
         return
