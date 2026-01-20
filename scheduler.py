@@ -96,7 +96,7 @@ def start_scheduler():
         day_end,
         trigger="cron",
         hour=20,
-        minute=55,
+        minute=57,
         id="day_end_reminder",
         replace_existing=True,
     )
