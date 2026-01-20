@@ -77,12 +77,19 @@ async def day_end(again=False, chat_id=None, lang=None):
 
         for user in users:
             day = date.today()
-            attendance = (db.get_attendance(user_id=user.get("id"), day_id=day.get("id")) or {}).get("start_time")
-            
-            if not attendance: return
-            
+            attendance = (db.get_attendance(
+                user_id=user.get("id"),
+                day_id=day.get("id")
+            ) or {}).get("start_time")
+        
+            if not attendance:
+                continue
+        
             lang = user.get("lang")
-            await send_day_end_message(chat_id=user.get("telegram_id"), lang=lang)
+            await send_day_end_message(
+                chat_id=user.get("telegram_id"),
+                lang=lang
+            )
     
     # If day end message is sending 1 hour later after worker rejected to end day
     else:
@@ -165,7 +172,7 @@ def auto_close_all_open_days():
             is_absent=1
         )
         db.update_user_attendance_time(
-            user_id=user("id"),
+            user_id=user.get("id"),
             field_name="end_time",
             time=CUTOFF_TIME
         )
