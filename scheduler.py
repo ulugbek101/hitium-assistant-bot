@@ -95,7 +95,7 @@ def start_scheduler():
     scheduler.add_job(
         day_end,
         trigger="cron",
-        hour=17,
+        hour=20,
         minute=55,
         id="day_end_reminder",
         replace_existing=True,
