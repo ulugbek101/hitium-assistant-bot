@@ -76,7 +76,8 @@ async def day_end(again=False, chat_id=None, lang=None):
         users = db.get_users()
 
         for user in users:
-            day = date.today()
+            today = date.today()
+            day = db.get_day(today)
             attendance = (db.get_attendance(
                 user_id=user.get("id"),
                 day_id=day.get("id")
