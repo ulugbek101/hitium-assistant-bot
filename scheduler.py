@@ -1,5 +1,6 @@
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
+from sqlalchemy import create_engine
 from zoneinfo import ZoneInfo
 
 from loader import DB_NAME, DB_HOST, DB_USER, DB_PASSWORD, DB_PORT
@@ -21,19 +22,22 @@ TASHKENT_TZ = ZoneInfo("Asia/Tashkent")
 # -------------------------------------------------
 # JobStore (DB-backed)
 # -------------------------------------------------
+engine = create_engine(
+    f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}",
+    pool_pre_ping=True,   # 🔥 detects dead connections
+    pool_recycle=1800,    # 🔥 recycle every 30 min
+    pool_size=5,
+    max_overflow=10,
+)
+
 jobstores = {
-    "default": SQLAlchemyJobStore(
-        # PostgreSQL (PROD):
-        # url="postgresql+psycopg2://user:password@localhost:5432/hitium_bot_jobs"
-
-        # MySQL (PROD):
-        url=f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-
-        # SQLite (DEV ONLY):
-        # url="sqlite:///hitium_bot_jobs.sqlite"
-    )
+    "default": SQLAlchemyJobStore(engine=engine)
 }
 
+job_defaults = {
+    "coalesce": True,
+    "misfire_grace_time": 600,  # 10 minutes
+}
 
 # -------------------------------------------------
 # Scheduler instance (SINGLETON)
@@ -41,6 +45,7 @@ jobstores = {
 scheduler = AsyncIOScheduler(
     timezone=TASHKENT_TZ,
     jobstores=jobstores,
+    job_defaults=job_defaults,
 )
 
 
