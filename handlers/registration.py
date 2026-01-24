@@ -154,7 +154,7 @@ async def save_id_card_photo1(message: types.Message, state: FSMContext, lang: s
         await message.answer(t("invalid_photo_type", lang))
         return
 
-    path = await download_photo(bot=bot, message=message, side="front")
+    path = await download_photo(bot=bot, message=message, side="front", is_passport=False)
 
     db.update_user_field(telegram_id=message.from_user.id, field_name="id_card_photo1", value=path)
 
@@ -168,7 +168,7 @@ async def save_id_card_photo2(message: types.Message, state: FSMContext, lang: s
         await message.answer(t("invalid_photo_type", lang))
         return
 
-    path = await download_photo(bot=bot, message=message, side="back")
+    path = await download_photo(bot=bot, message=message, side="back", is_passport=False)
 
     db.update_user_field(telegram_id=message.from_user.id, field_name="id_card_photo2", value=path)
 
