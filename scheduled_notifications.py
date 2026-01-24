@@ -17,8 +17,8 @@ async def day_start():
     """
 
     # Skip, if today is not a working day
-    is_working_day = check_working_day()
-    if not is_working_day: return
+    if not check_working_day():
+        return
 
     users = db.get_users()
 

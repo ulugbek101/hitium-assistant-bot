@@ -66,7 +66,7 @@ def start_scheduler():
         create_working_day,
         trigger="cron",
         hour=5,
-        minute=50,
+        minute=55,
         id="create_working_day",
         replace_existing=True,
     )

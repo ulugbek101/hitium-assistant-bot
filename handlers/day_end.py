@@ -22,7 +22,7 @@ async def end_working_day(call: types.CallbackQuery, lang: str):
 
     # Skip, if worker is finishing day next day or after CUT OFF (21:00)
     is_user_already_finished = (db.get_attendance(user_id=user.get("id"), day_id=day.get("id")) or {}).get("end_time")
-    if not is_user_already_finished:
+    if is_user_already_finished:
         await call.message.delete_reply_markup()
         return
 
@@ -37,7 +37,7 @@ async def end_working_day(call: types.CallbackQuery, lang: str):
             time=now.time()
             )
 
-        await call.message.delete_reply_markup()
+        # await call.message.delete_reply_markup()
         await call.message.answer(
             text=t(key="day_end_success", lang=lang)
         )

@@ -10,6 +10,7 @@ from handlers.start import router
 from scheduler import start_scheduler
 from config import MEDIA_ROOT, ADMINS
 
+
 async def notify_admins():
     for admin in ADMINS:
         await bot.send_message(

@@ -5,6 +5,8 @@ from aiogram import types
 from i18n.translate import t
 from loader import db
 from router import router
+from utils.helpers import check_working_day
+
 
 @router.callback_query(lambda call: call.data.startswith("day_start"))
 async def start_working_day(call: types.CallbackQuery, lang: str):
@@ -15,9 +17,13 @@ async def start_working_day(call: types.CallbackQuery, lang: str):
     day = db.get_day(day_date=date.today())
     is_user_already_checked = (db.get_attendance(user_id=user.get("id"), day_id=day.get("id")) or {}).get("start_time")
 
-    # Skip user check if already checked and remove unnecessary keyboard to avoid next random click on it
+    # Skip user check if already checked and remove an unnecessary keyboard to avoid next random click on it
     if is_user_already_checked: 
         await call.message.delete_reply_markup()
+        return
+
+    # Skip, if user is checking attendance other day like Sunday
+    if not check_working_day():
         return
 
     # Update is_absent
