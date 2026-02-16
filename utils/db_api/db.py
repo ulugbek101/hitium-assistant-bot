@@ -1,8 +1,12 @@
+import logging
+
 from datetime import datetime, date
 from typing import List, Dict, Union
 
 import pymysql
 
+
+logger = logging.getLogger(__name__)
 
 class Database:
     def __init__(self, db_name, db_password, db_user, db_port, db_host) -> None:
@@ -109,7 +113,9 @@ class Database:
                 day INT NOT NULL REFERENCES days(id),
                 is_absent BOOL NOT NULL DEFAULT TRUE,
                 start_time TIME,
-                end_time TIME
+                end_time TIME,
+
+                CONSTRAINT unique_attendance_for_user_per_day UNIQUE(day, worker)
             )
         """
         self.execute(sql)
@@ -196,8 +202,14 @@ class Database:
         # Ensure attendance exists
         attendance = self.get_attendance(user_id, day_id)
         if not attendance:
-            self.create_attendance_for_user(user_id, day_id)
-    
+            try:
+                self.create_attendance_for_user(user_id, day_id)
+            except pymysql.IntegrityError as e:
+                logger.warning(
+                    "Attendance already exists (race condition). user_id=%s day_id=%s field=%s time=%s error=%s. Location: db.py, line: 209",
+                    user_id, day_id, field_name, time, e
+                )
+
         # Update the time
         sql = f"UPDATE attendance SET {field_name} = %s WHERE worker = %s AND day = %s"
         self.execute(sql, (time, user_id, day_id), commit=True)
