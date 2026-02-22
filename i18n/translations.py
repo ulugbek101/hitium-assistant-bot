@@ -1,4 +1,8 @@
 TRANSLATIONS = {
+    "work_completed_description_btn": {
+        "uz": "Aytarlik hech narsa yo'q",
+        "ru": "Нечего сказать",
+    },
     "registration_btn": {
         "uz": "Ro'yxatdan o'tish",
         "ru": "Зарегистрироваться",
@@ -56,11 +60,15 @@ TRANSLATIONS = {
             "uz": "Mutaxassislik nomi noto'g'ri kiritilgan",
             "ru": "Выбран неверный тип профессии",
     },
-
+    "work_completed_description_optional": {
+        "uz": "Agar biron izoh qoldirmoqchi bo'lsangiz, yozib qoldiring",
+        "ru": "Если есть что добавить, то оставьте как комментарий",
+    },
 
     "already_registered_warning": {
         "uz": "Hurmatli {fullname}, siz bazada mavjud ekansiz, shu sabab ma'lumotlaringiz qayta yangilanadi",
-        "ru": "Уважаемый {fullname}, вы уже существуете в нашей базе, поэтому последующая регистрация просто заменит ваши данные",
+        "ru": "Уважаемый {fullname}, вы уже существуете в нашей базе, поэтому последующая регистрация просто заменит "
+              "ваши данные",
     },
     "wrong_language_warning": {
         "uz": "Til noto'g'ri tanlandi, iltimos, quyida keltirilganlardan tanlang",
@@ -107,6 +115,10 @@ TRANSLATIONS = {
         "uz": "Qaysi hujjat turidan foydalanasiz, Passport yoki ID karta ?",
         "ru": "Каким типом документа вы пользуетесь, Паспорт или ID карта ?",
     },
+    "request_work_completed_photo": {
+        "uz": "Bajarilgan ish uchun rasm yuboring",
+        "ru": "Отправьте фото выполненной работы",
+    },
 
     "invalid_phone_number": {
         "uz": "Telefon raqam noto'g'ri formatda kiritildi, qaytadan kiriting yoki tugmani bosish orqali yuboring",
@@ -119,6 +131,10 @@ TRANSLATIONS = {
     "invalid_document_type": {
         "uz": "Noto'g'ri hujjat turi tanlandi, iltimos, quyida keltirilganlardan tanlang",
         "ru": "Выбран неверный тип документа, пожалуйста, выберите из указанных выше",
+    },
+    "invalid_task_photo": {
+        "uz": "Rasm formati noto'g'ri",
+        "ru": "Неверный формат фото"
     },
 
     "passport_photo_request": {
@@ -211,6 +227,30 @@ TRANSLATIONS = {
     "description": {
         "uz": "Ta'rifi",
         "ru": "Описание",
+    },
+    "request_work_completed_description_optional": {
+        "uz": "Bajarilgan vazifaga qisqacha ta'rif yozishingiz mumkin",
+        "ru": "Вы можете написать краткое описание проделанной работе",
+    },
+    "no_tasks_found": {
+        "uz": "Vazifalar mavjud emas",
+        "ru": "Задач пока нет",
+    },
+    "worker_not_found": {
+        "uz": "Xodim bazada topilmadi",
+        "ru": "Сотрудник не найден в базе",
+    },
+    "finished_work_details_sent_for_review": {
+        "uz": "Ish tafsilotlari ko'rib chiqish uchun yuborildi, natijasini kuting",
+        "ru": "Подробности выполненной работы отправлены на проверку, ожидайте ответа",
+    },
+    "error_while_sending_details": {
+        "uz": "❌ Ma'lumotlarni yuborib bo'lmadi: {}",
+        "ru": "❌ Не удалось отправить отчет: {}",
+    },
+    "something_went_wrong_on_backend": {
+        "uz": "Tafsilotlarni saqlashda xatolik yuz berdi",
+        "ru": "Произошла ошибка при сохранении деталей",
     }
 
 }
