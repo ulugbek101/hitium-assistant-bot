@@ -1,3 +1,6 @@
+import logging
+import pymysql
+
 from datetime import date
 from datetime import time
 from loader import db
@@ -7,6 +10,8 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from i18n.translate import t
 from loader import bot, db, ADMINS
 from utils.helpers import check_working_day
+
+logger = logging.getLogger(__name__)
 
 CUTOFF_TIME = time(21, 0)
 
@@ -152,8 +157,14 @@ def create_attendance_for_everyday():
         # Check if attendance already exists to avoid duplicates
         existing = db.get_attendance(user_id=user.get("id"), day_id=day.get("id"))
         if not existing:
-            db.create_attendance_for_user(user_id=user.get("id"), day_id=day.get("id"))
-
+            try:
+                db.create_attendance_for_user(user_id=user.get("id"), day_id=day.get("id"))
+            except pymysql.IntegrityError as e:
+                logger.warning(
+                    "Attendance already exists (race condition). user_id=%s day_id=%s time=%s error=%s. Location: scheduled_notifications.py, line: 159",
+                    user.get("id"), day.get("id"), time, e
+                )
+                
 
 def auto_close_all_open_days():
     """

@@ -305,7 +305,13 @@ async def register_user(telegram_id: int):
             if r.status == 200:
                 await bot.send_message(telegram_id, t("registration_success", user["lang"]))
             else:
-                await bot.send_message(telegram_id, t("registration_error", user["lang"]))
+                error_body = await r.text()
+
+                response_text = t("registration_error", user["lang"]) + "\n\n"
+                response_text += f"Status: {r.status}\n"
+                response_text += f"Response: {error_body}"
+    
+                await bot.send_message(telegram_id, response_text)
 
     for f in files:
         f.close()
