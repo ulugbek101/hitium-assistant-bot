@@ -1,8 +1,12 @@
-from datetime import datetime
+import logging
+
+from datetime import datetime, date
 from typing import List, Dict, Union
 
 import pymysql
 
+
+logger = logging.getLogger(__name__)
 
 class Database:
     def __init__(self, db_name, db_password, db_user, db_port, db_host) -> None:
@@ -81,7 +85,8 @@ class Database:
                 specialization VARCHAR(255) NULL,
                 id_card_photo1 VARCHAR(255) NULL,
                 id_card_photo2 VARCHAR(255) NULL,
-                passport_photo VARCHAR(255) NULL
+                passport_photo VARCHAR(255) NULL,
+                is_active BOOLEAN DEFAULT TRUE
             )
         """
         self.execute(sql)
@@ -109,7 +114,9 @@ class Database:
                 day INT NOT NULL REFERENCES days(id),
                 is_absent BOOL NOT NULL DEFAULT TRUE,
                 start_time TIME,
-                end_time TIME
+                end_time TIME,
+
+                CONSTRAINT unique_attendance_for_user_per_day UNIQUE(day, worker)
             )
         """
         self.execute(sql)
@@ -137,7 +144,7 @@ class Database:
         Initial registration of a user
         """
         sql = """
-            INSERT INTO users(telegram_id) 
+            INSERT INTO users(telegram_id)
             VALUES (%s)
         """
         self.execute(sql, (telegram_id,), commit=True)
@@ -162,29 +169,54 @@ class Database:
 
     def update_user_attendance(self, user_id: int, is_absent: bool) -> None:
         """
-        Updates user's attendance based on
+        Updates user's attendance (is_absent) for today
         """
-        day = self.get_day(date=datetime.today().date().strftime("%Y-%m-%d"))
-
-        sql = """
-            UPDATE attendance SET is_absent = %s WHERE worker = %s AND day = %s
-        """
-        self.execute(sql, (is_absent, user_id, day.get("id")), commit=True)
+        today = date.today()
+    
+        # Get or create today's day
+        day = self.get_day(today)
+        if not day:
+            day_id = self.create_day(today)
+        else:
+            day_id = day.get("id")
+    
+        # Update attendance
+        sql = "UPDATE attendance SET is_absent = %s WHERE worker = %s AND day = %s"
+        self.execute(sql, (is_absent, user_id, day_id), commit=True)
 
     def update_user_attendance_time(self, user_id: int, field_name: str, time: datetime.time):
         """
-        Updates users' work day start time or work day end time in attendance table
+        Updates user's start_time or end_time for today
         """
-
         if field_name not in ["start_time", "end_time"]:
-            raise ValueError("Should be start or end")
+            raise ValueError("Should be 'start_time' or 'end_time'")
+    
+        today = date.today()
+    
+        # Get or create today's day
+        day = self.get_day(today)
+        if not day:
+            day_id = self.create_day(today)
+        else:
+            day_id = day.get("id")
+    
+        # Ensure attendance exists
+        attendance = self.get_attendance(user_id, day_id)
+        if not attendance:
+            try:
+                self.create_attendance_for_user(user_id, day_id)
+            except pymysql.IntegrityError as e:
+                logger.warning(
+                    "Attendance already exists (race condition). user_id=%s day_id=%s field=%s time=%s error=%s. Location: db.py, line: 209",
+                    user_id, day_id, field_name, time, e
+                )
 
-        day_id = self.get_day(date=datetime.today()).get("id")
-
-        sql = f"""
-            UPDATE attendance SET {field_name} = %s WHERE worker = %s AND day = %s
-        """
-
+        # Update the time
+        sql = f"UPDATE attendance SET {field_name} = %s WHERE worker = %s AND day = %s"
+        self.execute(sql, (time, user_id, day_id), commit=True)
+    
+        # Update the time
+        sql = f"UPDATE attendance SET {field_name} = %s WHERE worker = %s AND day = %s"
         self.execute(sql, (time, user_id, day_id), commit=True)
 
     def get_user(self, telegram_id: str) -> dict:
@@ -219,14 +251,18 @@ class Database:
             return result.get('lang')
         return 'uz'
 
-    def get_day(self, date: datetime.date) -> dict | None:
+    def get_day(self, day_date: Union[datetime, date, str]) -> dict | None:
         """
-        Returns day
+        Returns day record from 'days' table
+        Accepts datetime, date, or string 'YYYY-MM-DD'
         """
-        sql = """
-            SELECT * FROM days WHERE date = %s
-        """
-        return self.execute(sql, (date,), fetchone=True)
+        if isinstance(day_date, datetime):
+            day_date = day_date.date()
+        elif isinstance(day_date, str):
+            day_date = datetime.strptime(day_date, "%Y-%m-%d").date()
+    
+        sql = "SELECT * FROM days WHERE date = %s"
+        return self.execute(sql, (day_date,), fetchone=True)
 
     def get_attendance(self, user_id: int, day_id: int) -> dict | None:
         """
@@ -236,3 +272,28 @@ class Database:
             SELECT * FROM attendance WHERE worker = %s AND day = %s
         """
         return self.execute(sql, (user_id, day_id), fetchone=True)
+
+
+    def get_users_with_open_attendance(self) -> list[dict]:
+        """
+        Returns users who:
+        - have attendance for today
+        - HAVE started their working day (start_time IS NOT NULL)
+        - HAVE NOT ended their working day yet (end_time IS NULL)
+        """
+        sql = """
+            SELECT
+                u.*,
+                a.id AS attendance_id,
+                a.start_time,
+                a.end_time,
+                a.is_absent
+            FROM attendance a
+            JOIN users u ON u.id = a.worker
+            JOIN days d ON d.id = a.day
+            WHERE d.date = %s
+            AND a.start_time IS NOT NULL
+            AND a.end_time IS NULL
+        """
+        today = datetime.today().date()
+        return self.execute(sql, (today,), fetchall=True)

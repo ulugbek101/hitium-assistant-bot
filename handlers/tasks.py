@@ -23,6 +23,10 @@ async def get_tasks(message: types.Message, lang: str):
             if resp.status == 200:
                 tasks = await resp.json()
 
+                if len(tasks) == 0:
+                    await message.answer(t("no_tasks_found"), lang)
+                    return
+
                 for i, task in enumerate(tasks, start=1):
                     is_done = task.get("is_done")
                     if is_done:
@@ -48,7 +52,7 @@ async def get_tasks(message: types.Message, lang: str):
 
                     # Add a button to complete a task only if user is a foreman (Бригадир)
                     if show_markup:
-                        markup.button(text=t("work_completed_btn"), callback_data="work_completed")
+                        markup.button(text=t("work_completed_btn"), callback_data=f"work_completed:{task.get('id')}")
 
                     await message.answer(text=task_text, parse_mode="HTML", reply_markup=markup.as_markup())
 

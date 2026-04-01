@@ -4,7 +4,7 @@ from aiogram import BaseMiddleware
 from aiogram.types import TelegramObject
 from typing import Callable, Dict, Any
 
-from config import TOKEN, DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, MEDIA_ROOT
+from config import TOKEN, DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, MEDIA_ROOT, ADMINS
 from utils.db_api.db import Database
 
 db = Database(db_name=DB_NAME,

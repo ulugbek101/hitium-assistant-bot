@@ -1,5 +1,6 @@
 from datetime import datetime
 import os
+from io import BytesIO
 
 from aiogram import types, Bot
 
@@ -35,3 +36,15 @@ def check_working_day():
     Checks whether today is working day or not
     """
     return datetime.now().weekday() + 1 in range(1, 7)
+
+
+async def download_photo_from_telegram(bot: Bot, file_id: str) -> BytesIO:
+    """
+    Downloads photo from telegram by file id
+    """
+
+    file = await bot.get_file(file_id)
+    buffer = BytesIO()
+    await bot.download_file(file.file_path, buffer)
+    buffer.seek(0)
+    return buffer

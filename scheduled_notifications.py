@@ -1,10 +1,19 @@
+import logging
+import pymysql
+
 from datetime import date
+from datetime import time
+from loader import db
 
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from i18n.translate import t
-from loader import bot, db
+from loader import bot, db, ADMINS
 from utils.helpers import check_working_day
+
+logger = logging.getLogger(__name__)
+
+CUTOFF_TIME = time(21, 0)
 
 
 async def day_start():
@@ -12,7 +21,15 @@ async def day_start():
     Task to send a message to all users a question whether a worker started his/her working day or not
     """
 
+    # Skip, if today is not a working day
+    if not check_working_day():
+        return
+
     users = db.get_users()
+
+    successes = []
+    fails = []
+    total = len(users)
 
     for user in users:
         lang = user.get("lang")
@@ -22,33 +39,83 @@ async def day_start():
         markup.button(text=t(key="day_start_yes", lang=lang), callback_data="day_start:yes")
         markup.adjust(1)
 
-        await bot.send_message(
-            chat_id=user.get("telegram_id"),
-            text=t(key="day_start", lang=lang),
-            reply_markup=markup.as_markup(),
-        )
+        try:
+            await bot.send_message(
+                chat_id=user.get("telegram_id"),
+                text=t(key="day_start", lang=lang),
+                reply_markup=markup.as_markup(),
+            )
+            successes.append({"first_name": user.get("first_name"), "last_name": user.get("last_name")})
+        except:
+            fails.append({"first_name": user.get("first_name"), "last_name": user.get("last_name")})
+
+    failed_users = ", ".join([f"{fail.get('first_name')} {fail.get('last_name')}".title() for fail in fails])
+    msg = ("Сообщение о начале рабочего дня отправлено\n\n"
+           f"Всего пользователей: {total}\n"
+           f"Всего отправлено: {len(successes)}\n"
+           f"Не отправлено: {len(fails)}\n\n")
+
+    if len(fails) > 0:
+        msg += f"Не удалось отправить пользователям: {failed_users}"
+
+    for admin in ADMINS:
+        try:
+            await bot.send_message(
+                chat_id=admin,
+                text=msg,
+            )
+        except:
+            pass
 
 
-async def day_end():
+async def day_end(again=False, chat_id=None, lang=None):
     """
     Task to send a message to all users a question whether a worker finished his/her working day or not
     """
+    
+    # Skip, if today is not a working day
+    is_working_day = check_working_day()
+    if not is_working_day: return
 
-    users = db.get_users()
+    if not again:
+        users = db.get_users()
 
-    for user in users:
-        lang = user.get("lang")
+        for user in users:
+            today = date.today()
+            day = db.get_day(today)
+            attendance = (db.get_attendance(
+                user_id=user.get("id"),
+                day_id=day.get("id")
+            ) or {}).get("start_time")
+        
+            if not attendance:
+                continue
+        
+            lang = user.get("lang")
+            await send_day_end_message(
+                chat_id=user.get("telegram_id"),
+                lang=lang
+            )
+    
+    # If day end message is sending 1 hour later after worker rejected to end day
+    else:
+        await send_day_end_message(chat_id=chat_id, lang=lang)
 
-        markup = InlineKeyboardBuilder()
-        markup.button(text=t(key="day_end_no", lang=lang), callback_data="day_end:no")
-        markup.button(text=t(key="day_end_yes", lang=lang), callback_data="day_end:yes")
-        markup.adjust(1)
 
+async def send_day_end_message(chat_id, lang=None):
+    markup = InlineKeyboardBuilder()
+    markup.button(text=t(key="day_end_no", lang=lang), callback_data="day_end:no")
+    markup.button(text=t(key="day_end_yes", lang=lang), callback_data="day_end:yes")
+    markup.adjust(1)
+
+    try:
         await bot.send_message(
-            chat_id=user.get("telegram_id"),
+            chat_id=chat_id,
             text=t(key="day_end", lang=lang),
             reply_markup=markup.as_markup(),
         )
+    except:
+        pass
 
 
 def create_working_day():
@@ -90,4 +157,34 @@ def create_attendance_for_everyday():
         # Check if attendance already exists to avoid duplicates
         existing = db.get_attendance(user_id=user.get("id"), day_id=day.get("id"))
         if not existing:
-            db.create_attendance_for_user(user_id=user.get("id"), day_id=day.get("id"))
+            try:
+                db.create_attendance_for_user(user_id=user.get("id"), day_id=day.get("id"))
+            except pymysql.IntegrityError as e:
+                logger.warning(
+                    "Attendance already exists (race condition). user_id=%s day_id=%s time=%s error=%s. Location: scheduled_notifications.py, line: 159",
+                    user.get("id"), day.get("id"), time, e
+                )
+                
+
+def auto_close_all_open_days():
+    """
+    Closes attendance for all users who did not end the day manually.
+    Runs every day at 21:00 Asia/Tashkent.
+    """
+
+    # Cancel job, if today is not a working day
+    is_working_day = check_working_day()
+    if not is_working_day: return
+
+    users = db.get_users_with_open_attendance()
+
+    for user in users:
+        db.update_user_attendance(
+            user_id=user.get("id"),
+            is_absent=1
+        )
+        db.update_user_attendance_time(
+            user_id=user.get("id"),
+            field_name="end_time",
+            time=CUTOFF_TIME
+        )
