@@ -85,7 +85,8 @@ class Database:
                 specialization VARCHAR(255) NULL,
                 id_card_photo1 VARCHAR(255) NULL,
                 id_card_photo2 VARCHAR(255) NULL,
-                passport_photo VARCHAR(255) NULL
+                passport_photo VARCHAR(255) NULL,
+                is_active BOOLEAN DEFAULT TRUE
             )
         """
         self.execute(sql)
