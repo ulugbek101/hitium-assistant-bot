@@ -111,4 +111,4 @@ def start_scheduler():
         minute=0,
         id="attendance_cutoff_21_00",
         replace_existing=True,
-    )
+        )
