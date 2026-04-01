@@ -32,6 +32,10 @@ async def day_start():
     total = len(users)
 
     for user in users:
+        # Go to next user if user is not active
+        if not user.get("is_active"):
+            continue
+
         lang = user.get("lang")
 
         markup = InlineKeyboardBuilder()
@@ -75,12 +79,17 @@ async def day_end(again=False, chat_id=None, lang=None):
     
     # Skip, if today is not a working day
     is_working_day = check_working_day()
-    if not is_working_day: return
+    if not is_working_day:
+        return
 
     if not again:
         users = db.get_users()
 
         for user in users:
+            # Go to next user if user is not active
+            if not user.get("is_active"):
+                continue
+
             today = date.today()
             day = db.get_day(today)
             attendance = (db.get_attendance(
@@ -154,6 +163,10 @@ def create_attendance_for_everyday():
     users = db.get_users()
 
     for user in users:
+        # Go to next user if user is not active
+        if not user.get("is_active"):
+            continue
+
         # Check if attendance already exists to avoid duplicates
         existing = db.get_attendance(user_id=user.get("id"), day_id=day.get("id"))
         if not existing:
